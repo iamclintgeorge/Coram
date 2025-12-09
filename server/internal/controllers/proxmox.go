@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"strconv"
 	"time"
 
@@ -15,11 +16,14 @@ import (
 	"github.com/iamclintgeorge/VM-Billing/pkg/proxmox"
 )
 
-const proxmoxHost = "https://192.168.0.242:8006" // Change to your Proxmox server
-const apiTokenSecret = "2c749185-ae22-4ded-b901-40c519c0b5e1" // Replace with your Proxmox API token
+//This is the working API handler of Proxmox
 
 // FetchVMStats handles the API request to fetch VM stats from Proxmox
 func FetchVMStats(c *gin.Context) {
+	config.LoadEnv()  // load environment vars
+    apiToken := os.Getenv("apiToken")
+	proxmoxHost := os.Getenv("proxmoxHost")
+	// log.Println(port)
     nodeName := c.Param("node")
 
     // Debugging: Log the node name and URL
@@ -52,7 +56,6 @@ func FetchVMStats(c *gin.Context) {
     }
 
     // Add the API token for authentication
-    apiToken := "root@pam!go-test="+apiTokenSecret // Replace with your actual API token
     req.Header.Add("Authorization", "PVEAPIToken=" + apiToken)
 
     // Send the request to Proxmox API
