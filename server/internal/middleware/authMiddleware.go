@@ -5,8 +5,8 @@
 
 // 	"github.com/gin-contrib/sessions"
 // 	"github.com/gin-gonic/gin"
-// 	"github.com/iamclintgeorge/VM-Billing/internal/config"
-// 	"github.com/iamclintgeorge/VM-Billing/internal/models"
+// 	"github.com/iamclintgeorge/Coram/internal/config"
+// 	"github.com/iamclintgeorge/Coram/internal/models"
 // )
 
 // func AuthMiddleware() gin.HandlerFunc {
@@ -62,8 +62,8 @@ import (
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
-	"github.com/iamclintgeorge/VM-Billing/internal/config"
-	"github.com/iamclintgeorge/VM-Billing/internal/models"
+	"github.com/iamclintgeorge/Coram/internal/config"
+	"github.com/iamclintgeorge/Coram/internal/models"
 )
 
 // AuthMiddleware ensures the user is logged in

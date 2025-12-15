@@ -2,8 +2,8 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/iamclintgeorge/VM-Billing/internal/controllers"
-	"github.com/iamclintgeorge/VM-Billing/internal/middleware"
+	"github.com/iamclintgeorge/Coram/internal/controllers"
+	"github.com/iamclintgeorge/Coram/internal/middleware"
 )
 
 func ProxmoxRoutes(rg *gin.RouterGroup) {
