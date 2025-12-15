@@ -77,7 +77,7 @@ function DynamicSignup() {
       {/* Branding - smaller */}
       <div className="absolute top-6 left-6 z-10">
         <div className="text-[#0C2340] font-playfair text-2xl">
-          <p>VM-Billing</p>
+          <p>Coram</p>
         </div>
       </div>
 

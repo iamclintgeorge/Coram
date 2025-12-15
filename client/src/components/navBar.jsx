@@ -9,7 +9,7 @@ const NavBar = () => {
   const [isUserOpen, setIsUserOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const logoText = "VM-Billing";
+  const logoText = "Coram";
 
   console.log("From Navbar", user);
 
