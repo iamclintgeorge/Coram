@@ -9,9 +9,9 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
-	"github.com/iamclintgeorge/VM-Billing/internal/config"
-	"github.com/iamclintgeorge/VM-Billing/internal/models"
-	"github.com/iamclintgeorge/VM-Billing/internal/routes"
+	"github.com/iamclintgeorge/Coram/internal/config"
+	"github.com/iamclintgeorge/Coram/internal/models"
+	"github.com/iamclintgeorge/Coram/internal/routes"
 )
 
 func main() {

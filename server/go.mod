@@ -1,4 +1,4 @@
-module github.com/iamclintgeorge/VM-Billing
+module github.com/iamclintgeorge/Coram
 
 go 1.24.0
 

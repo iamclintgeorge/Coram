@@ -12,9 +12,9 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/iamclintgeorge/VM-Billing/internal/config"
-	"github.com/iamclintgeorge/VM-Billing/internal/models"
-	"github.com/iamclintgeorge/VM-Billing/pkg/proxmox"
+	"github.com/iamclintgeorge/Coram/internal/config"
+	"github.com/iamclintgeorge/Coram/internal/models"
+	"github.com/iamclintgeorge/Coram/pkg/proxmox"
 )
 
 func FetchVMStats(c *gin.Context) {
