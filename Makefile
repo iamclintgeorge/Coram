@@ -1,4 +1,4 @@
 dev:
 	cd server && go run ./cmd/server & \
-	cd client && npm run dev
+	cd app && npm run dev
 

@@ -32,8 +32,8 @@ const VMList = () => {
         }/api/proxmox/fetchVMStats/${nodeName}`,
         { withCredentials: true }
       );
-      setStats(response.data.data);
-      console.log(response.data.data); // Debugging
+      setStats(response.data);
+      console.log(response.data);
     } catch (err) {
       console.log("Error while fetching VM Stats:", err.message);
     }
@@ -97,14 +97,16 @@ const VMList = () => {
     <div>
       {stats?.map((vm) => (
         <div key={vm.vmid} className="w-[30%]">
-          <SpecList
-            title={vm.name} // VM name
-            cpu={vm.cpu}
-            ram={vm.mem / 1024 / 1024}
-            disk={vm.disk / 1024 / 1024 / 1024}
-            status={vm.status}
-            icon={Server}
-          />
+          <Link to={`/vms/${vm.name}`}>
+            <SpecList
+              title={vm.name} // VM name
+              cpu={vm.cpu}
+              ram={vm.mem / 1024 / 1024}
+              disk={vm.disk / 1024 / 1024 / 1024}
+              status={vm.status}
+              icon={Server}
+            />
+          </Link>
         </div>
       ))}
     </div>

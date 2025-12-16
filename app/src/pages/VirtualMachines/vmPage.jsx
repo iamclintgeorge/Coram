@@ -1,0 +1,198 @@
+import React, { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import {
+  FiServer as Server,
+  FiPower as Power, // use for start
+  FiActivity as Activity,
+  FiRefreshCw as RefreshCw,
+  FiLoader as Loader, // spinning loader
+} from "react-icons/fi";
+
+// Helper functions (mocked safely)
+const formatBytes = (bytes) =>
+  bytes ? (bytes / 1024 / 1024).toFixed(1) + " MB" : "0 MB";
+const formatUptime = (seconds) =>
+  seconds
+    ? `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
+    : "0h 0m";
+
+const VmPage = () => {
+  const { id } = useParams();
+  const [vm, setVm] = useState(null);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Mock fetch function (replace with your API later)
+  const fetchVMDetails = async () => {
+    try {
+      setRefreshing(true);
+      // Example placeholder API response
+      const data = {
+        vm_id: id,
+        vm_name: `VM-${id}`,
+        status: "stopped",
+        cpus: 2,
+        mem: 4 * 1024 * 1024 * 1024,
+        disk: 50 * 1024 * 1024 * 1024,
+        uptime: 0,
+        created_at: new Date().toISOString(),
+      };
+      setVm(data);
+    } catch (err) {
+      console.error("Failed to fetch VM details", err);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
+  // Mock start/stop/shutdown API handler
+  const handleVMAction = async (action) => {
+    try {
+      setActionLoading(action);
+      console.log(`Performing action "${action}" on VM ${id}`);
+      // Simulate a delay
+      await new Promise((r) => setTimeout(r, 1000));
+      // Update status mock
+      setVm((prev) => ({
+        ...prev,
+        status: action === "start" ? "running" : "stopped",
+      }));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  useEffect(() => {
+    fetchVMDetails();
+  }, [id]);
+
+  if (!vm) {
+    return (
+      <div className="p-6 min-h-screen flex items-center justify-center text-gray-600">
+        <Loader className="w-6 h-6 animate-spin mr-2" /> Loading VM...
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 min-h-screen bg-gray-50">
+      <div className="mb-6 flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 font-playfair">
+            {vm.vm_name}
+          </h1>
+          <p className="text-gray-600 font-inter mt-1">
+            Manage and monitor your VM
+          </p>
+        </div>
+        <button
+          onClick={fetchVMDetails}
+          disabled={refreshing}
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50"
+        >
+          <RefreshCw className="w-4 h-4" />
+          {refreshing ? "Refreshing..." : "Refresh"}
+        </button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white flex justify-between items-center">
+          <div className="flex items-center gap-3">
+            <Server className="w-6 h-6" />
+            <div>
+              <h3 className="font-semibold text-lg">{vm.vm_name}</h3>
+              <p className="text-blue-100 text-sm">ID: {vm.vm_id}</p>
+            </div>
+          </div>
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+              vm.status === "running"
+                ? "bg-green-500 text-white"
+                : "bg-gray-500 text-white"
+            }`}
+          >
+            {vm.status}
+          </span>
+        </div>
+
+        <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+          <div className="bg-gray-50 p-3 rounded-lg text-center">
+            <p className="text-xs text-gray-600 mb-1">CPU Cores</p>
+            <p className="text-lg font-semibold text-gray-900">{vm.cpus}</p>
+          </div>
+          <div className="bg-gray-50 p-3 rounded-lg text-center">
+            <p className="text-xs text-gray-600 mb-1">Memory</p>
+            <p className="text-lg font-semibold text-gray-900">
+              {formatBytes(vm.mem)}
+            </p>
+          </div>
+          <div className="bg-gray-50 p-3 rounded-lg text-center">
+            <p className="text-xs text-gray-600 mb-1">Disk</p>
+            <p className="text-lg font-semibold text-gray-900">
+              {formatBytes(vm.disk)}
+            </p>
+          </div>
+          <div className="bg-gray-50 p-3 rounded-lg text-center">
+            <p className="text-xs text-gray-600 mb-1">Uptime</p>
+            <p className="text-lg font-semibold text-gray-900">
+              {formatUptime(vm.uptime)}
+            </p>
+          </div>
+        </div>
+
+        <div className="flex gap-2 mt-4">
+          {vm.status === "running" ? (
+            <>
+              <button
+                onClick={() => handleVMAction("shutdown")}
+                disabled={actionLoading === "shutdown"}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors disabled:opacity-50"
+              >
+                {actionLoading === "shutdown" ? (
+                  <Loader className="w-4 h-4 animate-spin" />
+                ) : (
+                  <PowerOff className="w-4 h-4" />
+                )}
+                Shutdown
+              </button>
+              <button
+                onClick={() => handleVMAction("stop")}
+                disabled={actionLoading === "stop"}
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50"
+              >
+                {actionLoading === "stop" ? (
+                  <Loader className="w-4 h-4 animate-spin" />
+                ) : (
+                  <PowerOff className="w-4 h-4" />
+                )}
+                Stop
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() => handleVMAction("start")}
+              disabled={actionLoading === "start"}
+              className="w-full flex items-center justify-center gap-2 px-3 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50"
+            >
+              {actionLoading === "start" ? (
+                <Loader className="w-4 h-4 animate-spin" />
+              ) : (
+                <Power className="w-4 h-4" />
+              )}
+              Start
+            </button>
+          )}
+        </div>
+
+        <div className="bg-gray-50 px-4 py-3 text-xs text-gray-600 border-t mt-4 flex justify-between items-center">
+          <span>Created: {new Date(vm.created_at).toLocaleDateString()}</span>
+          <Activity className="w-4 h-4 text-gray-400" />
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default VmPage;

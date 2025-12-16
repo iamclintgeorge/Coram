@@ -23,11 +23,9 @@ import ProfilePage from "./pages/ProfilePage/profilePage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-//Utility Components
-import UploadFile from "./pages/uploadFile/uploadFile";
-
 // VM Management - NEW
 import VMList from "./pages/VirtualMachines/vmList";
+import VmPage from "./pages/VirtualMachines/vmPage";
 import Billing from "./pages/Billing/billing";
 
 const App = () => {
@@ -47,8 +45,8 @@ const App = () => {
               <Route index element={<Navigate to="/dashboard" />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/upload" element={<UploadFile />} />
               <Route path="/vms" element={<VMList />} />
+              <Route path="/vms/:id" element={<VmPage />} />
               {/* <Route path="/order-vm" element={<VMList />} /> */}
               <Route path="/billing" element={<Billing />} />
               {/* <Route path="/setting" element={<Dashboard />} /> */}

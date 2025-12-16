@@ -1,2 +1,4 @@
-proxmoxHost = "https://192.168.122.15:8006"
-apiToken = "root@pam!test-vm-token=03acc1b3-bcf7-2e3b-a6e7-039aa344bce5"
+//Make sure to Put only the IP. DO NOT PUT HTTP or HTTPS
+proxmoxHost = "192.168.122.15"
+proxmoxPort = "8006"
+apiToken = "root@pam!test-vm-token=09acc1b3-bcf9-4e3b-a6e7-039aa344bce9"
