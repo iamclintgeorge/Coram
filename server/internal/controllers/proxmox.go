@@ -2,6 +2,7 @@
 package controllers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -70,7 +71,49 @@ if err != nil {
     c.JSON(http.StatusOK, vms)
 }
 
+func ControlVM(c *gin.Context) {
+	apiToken := os.Getenv("apiToken")
+    host := os.Getenv("proxmoxHost")
+    port := os.Getenv("proxmoxPort")
+    nodeName := c.Param("node")
+	vmIDStr := c.Param("id")
+    var payload map[string]interface{}
 
+	fmt.Println("Received payload:", payload)
+
+    if err := c.BindJSON(&payload); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+        return
+    }
+
+	fmt.Println("Received payload:", payload)
+
+    action := payload["action"].(string)
+    fmt.Println("Received action:", action)
+
+	    client := proxmox.NewClient(
+        host,
+        port,
+        nodeName,
+        apiToken,
+    )
+
+		vmID, err := strconv.Atoi(vmIDStr)
+if err != nil {
+    // Handle the error if the conversion fails
+    c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid VM ID"})
+    return
+}
+
+        err = client.ControlVM(vmID, action)
+    if err != nil {
+        log.Printf("Error fetching node status: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"message": "Action performed successfully"})
+}
 
 
 // func getProxmoxClient() (*proxmox.Client, error) {
