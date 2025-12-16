@@ -2,13 +2,15 @@ import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import {
   FiServer as Server,
-  FiPower as Power, // use for start
+  FiPower as PowerOff,
+  FiPower as Power,
   FiActivity as Activity,
   FiRefreshCw as RefreshCw,
-  FiLoader as Loader, // spinning loader
+  FiLoader as Loader,
 } from "react-icons/fi";
+import axios from "axios";
 
-// Helper functions (mocked safely)
+// Helper functions
 const formatBytes = (bytes) =>
   bytes ? (bytes / 1024 / 1024).toFixed(1) + " MB" : "0 MB";
 const formatUptime = (seconds) =>
@@ -21,23 +23,19 @@ const VmPage = () => {
   const [vm, setVm] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const nodeName = "pve";
 
-  // Mock fetch function (replace with your API later)
   const fetchVMDetails = async () => {
     try {
       setRefreshing(true);
-      // Example placeholder API response
-      const data = {
-        vm_id: id,
-        vm_name: `VM-${id}`,
-        status: "stopped",
-        cpus: 2,
-        mem: 4 * 1024 * 1024 * 1024,
-        disk: 50 * 1024 * 1024 * 1024,
-        uptime: 0,
-        created_at: new Date().toISOString(),
-      };
-      setVm(data);
+      const response = await axios.get(
+        `${
+          import.meta.env.VITE_admin_server
+        }/api/proxmox/vms/${nodeName}/${id}`,
+        { withCredentials: true }
+      );
+      setVm(response.data); // Set fetched VM data
+      console.log(response);
     } catch (err) {
       console.error("Failed to fetch VM details", err);
     } finally {
@@ -45,26 +43,9 @@ const VmPage = () => {
     }
   };
 
-  // Mock start/stop/shutdown API handler
-  const handleVMAction = async (action) => {
-    try {
-      setActionLoading(action);
-      console.log(`Performing action "${action}" on VM ${id}`);
-      // Simulate a delay
-      await new Promise((r) => setTimeout(r, 1000));
-      // Update status mock
-      setVm((prev) => ({
-        ...prev,
-        status: action === "start" ? "running" : "stopped",
-      }));
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setActionLoading(null);
-    }
-  };
-
+  // UseEffect to fetch VM details when the page is loaded or ID changes
   useEffect(() => {
+    console.log(id);
     fetchVMDetails();
   }, [id]);
 
@@ -88,7 +69,7 @@ const VmPage = () => {
           </p>
         </div>
         <button
-          onClick={fetchVMDetails}
+          onClick={fetchVMDetails} // Refresh functionality
           disabled={refreshing}
           className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50"
         >
