@@ -21,6 +21,7 @@ const formatUptime = (seconds) =>
 const VmPage = () => {
   const { id } = useParams();
   const [vm, setVm] = useState(null);
+  const [vncURL, setVncURL] = useState("");
   const [actionLoading, setActionLoading] = useState(null);
   const nodeName = "pve";
 
@@ -39,6 +40,9 @@ const VmPage = () => {
         { withCredentials: true }
       );
       setVm(response.data);
+      setVncURL(
+        `https://192.168.122.15:8006/?console=kvm&novnc=1&vmid=${response.data.vmid}&vmname=${response.data.name}&node=${nodeName}&resize=off&cmd=`
+      );
       console.log(response);
     } catch (err) {
       console.error("Failed to fetch VM details", err);
@@ -173,6 +177,12 @@ const VmPage = () => {
         <div className="bg-gray-50 px-4 py-3 text-xs text-gray-600 border-t mt-4 flex justify-between items-center">
           <span>Created: {new Date(vm.created_at).toLocaleDateString()}</span>
           <Activity className="w-4 h-4 text-gray-400" />
+        </div>
+
+        <div className="bg-gray-50 px-4 py-3 text-xs text-gray-600 border-t mt-4 flex justify-between items-center">
+          <a target="_blank" href={vncURL}>
+            <button>Open noVNC</button>
+          </a>
         </div>
       </div>
     </div>
