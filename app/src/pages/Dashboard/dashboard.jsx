@@ -16,7 +16,7 @@ const Dashboard = () => {
       const response = await axios.get(
         `${
           import.meta.env.VITE_admin_server
-        }/api/proxmox/fetchVMStats/${nodeName}`,
+        }/api/proxmox/fetchNodeStats/${nodeName}`,
         { withCredentials: true }
       );
       setStats(response.data);

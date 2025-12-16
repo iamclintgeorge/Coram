@@ -17,14 +17,26 @@ type Client struct {
 	HTTPClient *http.Client
 }
 
+// type VMStatusResponse struct {
+//     Data []map[string]interface{} `json:"data"`
+// }
+
+// type VMStatusResponse struct {
+//     Data VMData `json:"data"`
+// }
+
 type VMStatusResponse struct {
-    Data []map[string]interface{} `json:"data"`
+    Data VMData `json:"data"`
+}
+
+type VMListResponse struct {
+    Data []VMData `json:"data"`
 }
 
 type VMData struct {
     Name       string  `json:"name"`
     Status     string  `json:"status"`
-    // VMID       int     `json:"vmid"`
+    VMID       int     `json:"vmid"`
     CPUs       int     `json:"cpus"`
     MaxMem     int64   `json:"maxmem"`
     Mem        int64   `json:"mem"`
@@ -73,29 +85,7 @@ func (c *Client) makeRequest(method, path string, body io.Reader) (*http.Respons
 	return c.HTTPClient.Do(req)
 }
 
-func (c *Client) GetVMStatus(vmID int) (*VMStatusResponse, error) {
-	path := fmt.Sprintf("/api2/json/nodes/%s/qemu/%d/status/current", c.NodeName, vmID)
-	
-	resp, err := c.makeRequest("GET", path, nil)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-	
-	if resp.StatusCode != 200 {
-		body, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("API error: %d - %s", resp.StatusCode, string(body))
-	}
-	
-	var vmStatus VMStatusResponse
-	if err := json.NewDecoder(resp.Body).Decode(&vmStatus); err != nil {
-		return nil, err
-	}
-	
-	return &vmStatus, nil
-}
-
-func (c *Client) GetNodeStatus() ([]map[string]interface{}, error) {
+func (c *Client) GetNodeStatus() ([]VMData, error) {
     path := fmt.Sprintf("/api2/json/nodes/%s/qemu", c.NodeName)
 
     resp, err := c.makeRequest("GET", path, nil)
@@ -109,17 +99,48 @@ func (c *Client) GetNodeStatus() ([]map[string]interface{}, error) {
         return nil, fmt.Errorf("API error: %d - %s", resp.StatusCode, string(body))
     }
 
-    var vmStatus VMStatusResponse
-    if err := json.NewDecoder(resp.Body).Decode(&vmStatus); err != nil {
+    // Use VMListResponse instead of VMStatusResponse
+    var vmList VMListResponse
+    if err := json.NewDecoder(resp.Body).Decode(&vmList); err != nil {
         return nil, err
     }
 
     // Optional: log each VM for debugging
-    for _, vm := range vmStatus.Data {
+    for _, vm := range vmList.Data {
         fmt.Printf("VM: %v\n", vm)
     }
 
-    return vmStatus.Data, nil
+    return vmList.Data, nil
+}
+
+
+func (c *Client) GetVMStatus(vmID int) (VMData, error) {
+    path := fmt.Sprintf("/api2/json/nodes/%s/qemu/%d/status/current", c.NodeName, vmID)
+
+    resp, err := c.makeRequest("GET", path, nil)
+    if err != nil {
+        return VMData{}, err
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != 200 {
+        body, _ := io.ReadAll(resp.Body)
+        return VMData{}, fmt.Errorf("API error: %d - %s", resp.StatusCode, string(body))
+    }
+
+    var vmStatus VMStatusResponse
+    if err := json.NewDecoder(resp.Body).Decode(&vmStatus); err != nil {
+        return VMData{}, err
+    }
+
+    fmt.Printf("VM: %v\n", vmStatus.Data)
+
+    // If the vmStatus.Data is valid, return it
+    if vmStatus.Data.Name != "" {
+        return vmStatus.Data, nil
+    }
+
+    return VMData{}, fmt.Errorf("VM not found")
 }
 
 

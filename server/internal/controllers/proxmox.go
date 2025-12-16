@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 	"os"
-	// "strconv"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	// "github.com/iamclintgeorge/Coram/internal/config"
@@ -14,7 +14,7 @@ import (
 )
 
 //This fetches Information of all the VMs in a node
-func FetchVMStats(c *gin.Context) {
+func FetchNodeStats(c *gin.Context) {
     apiToken := os.Getenv("apiToken")
     host := os.Getenv("proxmoxHost")
     port := os.Getenv("proxmoxPort")
@@ -28,6 +28,39 @@ func FetchVMStats(c *gin.Context) {
     )
 
     vms, err := client.GetNodeStatus()
+    if err != nil {
+        log.Printf("Error fetching node status: %v", err)
+        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+        return
+    }
+
+    c.JSON(http.StatusOK, vms)
+}
+
+func FetchVMStats(c *gin.Context) {
+    apiToken := os.Getenv("apiToken")
+    host := os.Getenv("proxmoxHost")
+    port := os.Getenv("proxmoxPort")
+    nodeName := c.Param("node")
+	vmIDStr := c.Param("id")
+
+	log.Println("FetchVMStats")
+
+    client := proxmox.NewClient(
+        host,
+        port,
+        nodeName,
+        apiToken,
+    )
+
+	vmID, err := strconv.Atoi(vmIDStr)
+if err != nil {
+    // Handle the error if the conversion fails
+    c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid VM ID"})
+    return
+}
+
+    vms, err := client.GetVMStatus(vmID)
     if err != nil {
         log.Printf("Error fetching node status: %v", err)
         c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
