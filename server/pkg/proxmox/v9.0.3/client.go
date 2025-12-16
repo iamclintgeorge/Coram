@@ -18,27 +18,32 @@ type Client struct {
 }
 
 type VMStatusResponse struct {
-	Data VMData `json:"data"`
+    Data []map[string]interface{} `json:"data"`
 }
 
 type VMData struct {
-	Name      string  `json:"name"`
-	Status    string  `json:"status"`
-	VMID      int     `json:"vmid"`
-	CPUs      int     `json:"cpus"`
-	MaxMem    int64   `json:"maxmem"`
-	Mem       int64   `json:"mem"`
-	MaxDisk   int64   `json:"maxdisk"`
-	Disk      int64   `json:"disk"`
-	Uptime    int64   `json:"uptime"`
-	CPU       float64 `json:"cpu"`
-	DiskRead  int64   `json:"diskread"`
-	DiskWrite int64   `json:"diskwrite"`
-	NetIn     int64   `json:"netin"`
-	NetOut    int64   `json:"netout"`
+    Name       string  `json:"name"`
+    Status     string  `json:"status"`
+    // VMID       int     `json:"vmid"`
+    CPUs       int     `json:"cpus"`
+    MaxMem     int64   `json:"maxmem"`
+    Mem        int64   `json:"mem"`
+    MaxDisk    int64   `json:"maxdisk"`
+    // Disk       int64   `json:"disk"`
+    Uptime     int64   `json:"uptime"`
+    CPU        float64 `json:"cpu"`
+    DiskRead   int64   `json:"diskread"`
+    DiskWrite  int64   `json:"diskwrite"`
+    NetIn      int64   `json:"netin"`
+    NetOut     int64   `json:"netout"`
+    // Template   int     `json:"template"`
+    // OS_Type    string  `json:"ostype"`
+    // StartTime  int64   `json:"starttime"`
+    // HA_Enabled bool    `json:"ha_enabled"`
 }
 
 func NewClient(host, port, nodeName, apiToken string) *Client {
+	// 	//FIXME: Remove the skipping of certificate in production or at least give the user the option to control this particular behaviour
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 	}
@@ -89,6 +94,34 @@ func (c *Client) GetVMStatus(vmID int) (*VMStatusResponse, error) {
 	
 	return &vmStatus, nil
 }
+
+func (c *Client) GetNodeStatus() ([]map[string]interface{}, error) {
+    path := fmt.Sprintf("/api2/json/nodes/%s/qemu", c.NodeName)
+
+    resp, err := c.makeRequest("GET", path, nil)
+    if err != nil {
+        return nil, err
+    }
+    defer resp.Body.Close()
+
+    if resp.StatusCode != 200 {
+        body, _ := io.ReadAll(resp.Body)
+        return nil, fmt.Errorf("API error: %d - %s", resp.StatusCode, string(body))
+    }
+
+    var vmStatus VMStatusResponse
+    if err := json.NewDecoder(resp.Body).Decode(&vmStatus); err != nil {
+        return nil, err
+    }
+
+    // Optional: log each VM for debugging
+    for _, vm := range vmStatus.Data {
+        fmt.Printf("VM: %v\n", vm)
+    }
+
+    return vmStatus.Data, nil
+}
+
 
 func (c *Client) ControlVM(vmID int, action string) error {
 	path := fmt.Sprintf("/api2/json/nodes/%s/qemu/%d/status/%s", c.NodeName, vmID, action)

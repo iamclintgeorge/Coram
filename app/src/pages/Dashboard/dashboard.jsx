@@ -19,7 +19,7 @@ const Dashboard = () => {
         }/api/proxmox/fetchVMStats/${nodeName}`,
         { withCredentials: true }
       );
-      setStats(response.data.data);
+      setStats(response.data);
     } catch (err) {
       console.log("Error while fetching VM Stats:", err.message);
     }

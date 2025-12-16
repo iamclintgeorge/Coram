@@ -16,6 +16,7 @@ import (
 
 func main() {
 	config.Connect()
+	config.LoadEnv()
 	
 	config.DB.AutoMigrate(
 		&models.User{},

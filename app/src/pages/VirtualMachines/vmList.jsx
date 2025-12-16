@@ -32,8 +32,8 @@ const VMList = () => {
         }/api/proxmox/fetchVMStats/${nodeName}`,
         { withCredentials: true }
       );
-      setStats(response.data.data);
-      console.log(response.data.data); // Debugging
+      setStats(response.data);
+      console.log(response.data);
     } catch (err) {
       console.log("Error while fetching VM Stats:", err.message);
     }
