@@ -5,7 +5,7 @@ import {
   FiPower as PowerOff,
   FiPower as Power,
   FiActivity as Activity,
-  FiRefreshCw as RefreshCw,
+  // FiRefreshCw as RefreshCw,
   FiLoader as Loader,
 } from "react-icons/fi";
 import axios from "axios";
@@ -22,32 +22,43 @@ const VmPage = () => {
   const { id } = useParams();
   const [vm, setVm] = useState(null);
   const [actionLoading, setActionLoading] = useState(null);
-  const [refreshing, setRefreshing] = useState(false);
   const nodeName = "pve";
+
+  useEffect(() => {
+    console.log(id);
+    fetchVMDetails();
+  }, [id]);
 
   const fetchVMDetails = async () => {
     try {
-      setRefreshing(true);
+      // setRefreshing(true);
       const response = await axios.get(
         `${
           import.meta.env.VITE_admin_server
         }/api/proxmox/vms/${nodeName}/${id}`,
         { withCredentials: true }
       );
-      setVm(response.data); // Set fetched VM data
+      setVm(response.data);
       console.log(response);
     } catch (err) {
       console.error("Failed to fetch VM details", err);
-    } finally {
-      setRefreshing(false);
     }
   };
 
-  // UseEffect to fetch VM details when the page is loaded or ID changes
-  useEffect(() => {
-    console.log(id);
-    fetchVMDetails();
-  }, [id]);
+  const handleVMAction = async (action) => {
+    console.log(action);
+    try {
+      const response = await axios.post(
+        `${
+          import.meta.env.VITE_admin_server
+        }/api/proxmox/vms/${nodeName}/${id}`,
+        { action: action }, // Wrap action in an object
+        { withCredentials: true }
+      );
+    } catch (err) {
+      console.error("Failed to Perform VM Action", err);
+    }
+  };
 
   if (!vm) {
     return (
@@ -62,36 +73,28 @@ const VmPage = () => {
       <div className="mb-6 flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900 font-playfair">
-            {vm.vm_name}
+            {vm.name}
           </h1>
           <p className="text-gray-600 font-inter mt-1">
             Manage and monitor your VM
           </p>
         </div>
-        <button
-          onClick={fetchVMDetails} // Refresh functionality
-          disabled={refreshing}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-50"
-        >
-          <RefreshCw className="w-4 h-4" />
-          {refreshing ? "Refreshing..." : "Refresh"}
-        </button>
       </div>
 
       <div className="bg-white rounded-lg shadow-md overflow-hidden">
-        <div className="bg-gradient-to-r from-blue-600 to-blue-700 p-4 text-white flex justify-between items-center">
+        <div className="bg-gradient-to-r bg-gray-700 p-4 text-white flex justify-between items-center">
           <div className="flex items-center gap-3">
             <Server className="w-6 h-6" />
             <div>
-              <h3 className="font-semibold text-lg">{vm.vm_name}</h3>
-              <p className="text-blue-100 text-sm">ID: {vm.vm_id}</p>
+              <h3 className="font-semibold text-lg">{vm.name}</h3>
+              <p className="text-blue-100 text-sm">ID: {vm.vmid}</p>
             </div>
           </div>
           <span
             className={`px-3 py-1 rounded-full text-xs font-semibold ${
               vm.status === "running"
                 ? "bg-green-500 text-white"
-                : "bg-gray-500 text-white"
+                : "bg-red-500 text-white"
             }`}
           >
             {vm.status}

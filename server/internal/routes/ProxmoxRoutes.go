@@ -9,6 +9,7 @@ import (
 func ProxmoxRoutes(rg *gin.RouterGroup) {
 	rg.GET("/fetchNodeStats/:node", middleware.AuthMiddleware(),controllers.FetchNodeStats)
 	rg.GET("/vms/:node/:id", middleware.AuthMiddleware(),controllers.FetchVMStats)
+	rg.POST("/vms/:node/:id", middleware.AuthMiddleware(),controllers.ControlVM)
 
 	// vms := rg.Group("/vms")
 	// vms.Use(middleware.AuthMiddleware())
