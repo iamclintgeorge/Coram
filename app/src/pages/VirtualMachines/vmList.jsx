@@ -1,21 +1,11 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import {
-  Server,
-  Power,
-  PowerOff,
-  RefreshCw,
-  Loader,
-  Activity,
-} from "lucide-react";
-import api from "../../services/api";
-import { toast } from "react-toastify";
 import SpecList from "../../components/specList";
 import axios from "axios";
+import SearchBar from "../../components/searchBar";
 
 const VMList = () => {
-  const [vms, setVMs] = useState([]);
-  const [stats, setStats] = useState(null);
+  const [stats, setStats] = useState([]);
   const nodeName = "pve";
 
   useEffect(() => {
@@ -38,22 +28,31 @@ const VMList = () => {
   };
 
   return (
-    <div>
-      {stats?.map((vm) => (
-        <div key={vm.vmid} className="w-[30%]">
-          <Link to={`/vms/${vm.vmid}`}>
-            <SpecList
-              title={vm.name} // VM name
-              cpu={vm.cpu}
-              ram={vm.mem / 1024 / 1024}
-              disk={vm.disk / 1024 / 1024 / 1024}
-              status={vm.status}
-              icon={Server}
-            />
-          </Link>
+    <>
+      <div>
+        <SearchBar />
+      </div>
+      <div className="mt-10">
+        <div className="mt-10 flex flex-wrap gap-6">
+          {stats.map((vm) => (
+            <Link to={`/vms/${vm.vmid}`} key={vm.vmid} className="flex">
+              <SpecList
+                name={vm.name}
+                vmid={vm.vmid}
+                cpu={vm.cpu}
+                cpus={vm.cpus}
+                mem={vm.mem}
+                maxmem={vm.maxmem}
+                disk={vm.disk}
+                maxdisk={vm.maxdisk}
+                status={vm.status}
+                uptime={vm.uptime}
+              />
+            </Link>
+          ))}
         </div>
-      ))}
-    </div>
+      </div>
+    </>
   );
 };
 

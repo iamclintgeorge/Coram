@@ -90,25 +90,25 @@ const Dashboard = () => {
               {stats.map((vm) => (
                 <div
                   key={vm.vmid}
-                  className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-300"
+                  className="bg-white border border-gray-400 overflow-hidden hover:shadow-lg transition-shadow duration-300"
                 >
                   {/* VM Header */}
-                  <div className="bg-gradient-to-r from-blue-500 to-blue-600 px-5 py-4">
+                  <div className="px-5 py-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <Server className="text-white" size={24} />
+                        <Server className="text-black mr-5" size={24} />
                         <div>
-                          <h3 className="text-lg font-semibold text-white truncate max-w-[200px]">
+                          <h3 className="text-xl font-medium text-black truncate max-w-[200px]">
                             {vm.name}
                           </h3>
-                          <p className="text-blue-100 text-sm">ID: {vm.vmid}</p>
+                          <p className="text-black text-sm">ID: {vm.vmid}</p>
                         </div>
                       </div>
                       <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        className={`px-3 py-1 text-xs font-semibold ${
                           vm.status === "running"
-                            ? "bg-green-400 text-green-900"
-                            : "bg-red-400 text-red-900"
+                            ? "bg-green-700 text-white"
+                            : "bg-red-700 text-white"
                         }`}
                       >
                         {vm.status}
@@ -120,7 +120,6 @@ const Dashboard = () => {
                   <div className="p-5 space-y-3">
                     <div className="flex items-center justify-between py-2 border-b border-gray-100">
                       <div className="flex items-center gap-2">
-                        <Cpu className="text-blue-600" size={18} />
                         <span className="text-sm text-gray-600">CPU</span>
                       </div>
                       <div className="text-right">
@@ -135,7 +134,6 @@ const Dashboard = () => {
 
                     <div className="flex items-center justify-between py-2 border-b border-gray-100">
                       <div className="flex items-center gap-2">
-                        <Activity className="text-green-600" size={18} />
                         <span className="text-sm text-gray-600">Memory</span>
                       </div>
                       <div className="text-right">
@@ -150,7 +148,6 @@ const Dashboard = () => {
 
                     <div className="flex items-center justify-between py-2 border-b border-gray-100">
                       <div className="flex items-center gap-2">
-                        <HardDrive className="text-purple-600" size={18} />
                         <span className="text-sm text-gray-600">Disk</span>
                       </div>
                       <div className="text-right">
@@ -165,7 +162,6 @@ const Dashboard = () => {
 
                     <div className="flex items-center justify-between py-2">
                       <div className="flex items-center gap-2">
-                        <CheckCircle className="text-orange-600" size={18} />
                         <span className="text-sm text-gray-600">Uptime</span>
                       </div>
                       <p className="text-sm font-semibold text-gray-800">
