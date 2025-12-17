@@ -66,6 +66,14 @@ const VmPage = () => {
 
   if (!vm) return <Loader className="animate-spin" />; // Loader while fetching
 
+  const isRunning = vm.status === "running";
+  const isStopped = vm.status === "stopped";
+
+  const buttonBase = "border-[0.5px] px-4 py-2 transition cursor-pointer";
+  const buttonDisabled =
+    "bg-gray-200 text-gray-400 border-gray-300 cursor-not-allowed";
+  const buttonEnabled = "bg-white text-black border-gray-400 hover:bg-gray-100";
+
   return (
     <div className="container mx-auto p-4">
       <div className="flex mb-4">
@@ -92,34 +100,57 @@ const VmPage = () => {
           {formatBytes(vm.maxdisk)}
         </p>
 
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap gap-2">
+          {/* START */}
           <button
-            className="bg-white border-gray-400 border-[0.5px] text-black px-4 py-2 mr-2"
+            className={`${buttonBase} ${
+              isRunning || actionLoading === "start"
+                ? buttonDisabled
+                : buttonEnabled
+            }`}
             onClick={() => handleVMAction("start")}
-            disabled={actionLoading === "start"}
+            disabled={isRunning || actionLoading === "start"}
           >
             {actionLoading === "start" ? "Starting..." : "Start"}
           </button>
+
+          {/* STOP */}
           <button
-            className="bg-white border-gray-400 border-[0.5px] text-black px-4 py-2 mr-2"
+            className={`${buttonBase} ${
+              !isRunning || actionLoading === "stop"
+                ? buttonDisabled
+                : buttonEnabled
+            }`}
             onClick={() => handleVMAction("stop")}
-            disabled={actionLoading === "stop"}
+            disabled={!isRunning || actionLoading === "stop"}
           >
             {actionLoading === "stop" ? "Stopping..." : "Stop"}
           </button>
+
+          {/* SHUTDOWN */}
           <button
-            className="bg-white border-gray-400 border-[0.5px] text-black px-4 py-2"
+            className={`${buttonBase} ${
+              !isRunning || actionLoading === "shutdown"
+                ? buttonDisabled
+                : buttonEnabled
+            }`}
             onClick={() => handleVMAction("shutdown")}
-            disabled={actionLoading === "shutdown"}
+            disabled={!isRunning || actionLoading === "shutdown"}
           >
             {actionLoading === "shutdown" ? "Shutting down..." : "Shutdown"}
           </button>
+
+          {/* RESTART */}
           <button
-            className="bg-white border-gray-400 border-[0.5px] text-black px-4 py-2 ml-2"
+            className={`${buttonBase} ${
+              !isRunning || actionLoading === "restart"
+                ? buttonDisabled
+                : buttonEnabled
+            }`}
             onClick={() => handleVMAction("restart")}
-            disabled={actionLoading === "restart"}
+            disabled={!isRunning || actionLoading === "restart"}
           >
-            <Power className="inline-block" />{" "}
+            <Power className="inline-block mr-1" />
             {actionLoading === "restart" ? "Restarting..." : "Restart"}
           </button>
         </div>
