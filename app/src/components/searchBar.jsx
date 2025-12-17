@@ -115,7 +115,7 @@ const SearchBar = () => {
           onChange={handleChange}
           onBlur={handleBlur}
           onFocus={() => setIsActive(true)} // Show dropdown on focus
-          className="w-full h-9 font-inter pl-14 pr-12 text-gray-800 bg-gray-100 border-black rounded-sm outline-none transition duration-300 placeholder:text-gray-600"
+          className="w-full h-9 font-inter pl-14 pr-12 text-gray-800 bg-white border-gray-300 border-[0.02px] rounded-sm outline-none transition duration-300 placeholder:text-gray-400"
         />
         {query && (
           <button
@@ -126,7 +126,7 @@ const SearchBar = () => {
           </button>
         )}
         {!isActive && !query && (
-          <div className="absolute text-xs right-3 font-thin text-[#666666] cursor-pointer border-2 border-[#cbcbcb] rounded-md px-3 py-1 font-mono tracking-tighter">
+          <div className="absolute text-xs right-3 font-thin text-[#8d8d8d] cursor-pointer rounded-md px-3 py-1 font-mono tracking-tighter">
             ctrl + /
           </div>
         )}
