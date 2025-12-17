@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 import { useAuth } from "../services/useAuthCheck";
 import SearchBar from "./searchBar";
+import logo from "../../public/coramlogo.png";
 import { toast } from "react-toastify";
 
 const NavBar = () => {
@@ -66,11 +67,14 @@ const NavBar = () => {
         <div className="bg-[#af0f0f] h-[3px] w-full top-0"></div>
         <div className="bg-[#f4f4f4] h-16 w-full top-[3px] bottom-0 border-b-[0.5px] border-[#888888]">
           <div className="flex flex-row justify-between">
-            <Link to="/dashboard">
-              <div className="pl-9 pt-4 text-[#0C2340] font-playfair text-2xl">
-                {logoText}
-              </div>
-            </Link>
+            <div className="mt-4 ml-7">
+              <Link to="/dashboard" className="flex items-center gap-2">
+                <img src={logo} alt="Logo" className="w-8" />
+                <div className="text-[#0C2340] font-inter font-medium text-2xl">
+                  {logoText}
+                </div>
+              </Link>
+            </div>
             {/* {user.role == "superAdmin" && (
               <div className="hidden md:block">
                 <SearchBar />
