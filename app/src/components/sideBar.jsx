@@ -18,10 +18,10 @@ const DynamicSideBar = () => {
   if (!user) return null;
 
   return (
-    <div className="bg-[#f4f4f4] mt-16 min-h-screen max-h-auto w-64 text-[#0C2340] pb-10 sticky top-0 z-0 border-r-2 border-gray-400">
-      <div className="flex flex-col pt-9 pl-5 space-y-6 text-base font-light font-inter">
+    <div className="bg-[#f4f4f4] mt-16 min-h-screen max-h-auto w-44 text-[#0C2340] pb-10 sticky top-0 z-0 border-r-[0.5px] border-gray-400">
+      <div className="flex flex-col pt-9 pl-2 space-y-6 text-[15px] font-light font-inter">
         <Link to="/dashboard">
-          <div className="mr-8 hover:border-b-[1px] border-gray-500">
+          <div className="mr-8 hover:border-b-[1px] border-gray-500 flex flex-row">
             <p className="pl-5 flex justify-between pb-3">Overview</p>
           </div>
         </Link>
@@ -42,9 +42,7 @@ const DynamicSideBar = () => {
         </Link>
         <Link to="/signup">
           <div className="mr-8 hover:border-b-[1px] border-gray-500">
-            <p className="pl-5 flex justify-between pb-3">
-              Create User Account
-            </p>
+            <p className="pl-5 flex justify-between pb-3">Manage User</p>
           </div>
         </Link>
         <Link to="/setting">
