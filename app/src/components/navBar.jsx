@@ -10,7 +10,7 @@ const NavBar = () => {
   const [isUserOpen, setIsUserOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const logoText = "Coram";
+  const logoText = "coram";
 
   console.log("From Navbar", user);
 
@@ -70,7 +70,7 @@ const NavBar = () => {
             <div className="mt-4 ml-7">
               <Link to="/dashboard" className="flex items-center gap-2">
                 <img src={logo} alt="Logo" className="w-8" />
-                <div className="text-[#0C2340] font-inter font-medium text-2xl">
+                <div className="text-gray-600 pb-1 font-playfair font-medium text-2xl">
                   {logoText}
                 </div>
               </Link>
