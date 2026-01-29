@@ -27,6 +27,7 @@ import "react-toastify/dist/ReactToastify.css";
 import VMList from "./pages/VirtualMachines/vmList";
 import VmPage from "./pages/VirtualMachines/vmPage";
 import Billing from "./pages/Billing/billing";
+import OrderVM from "./pages/OrderVM/orderVM";
 
 const App = () => {
   return (
@@ -47,7 +48,7 @@ const App = () => {
               <Route path="/profile" element={<ProfilePage />} />
               <Route path="/vms" element={<VMList />} />
               <Route path="/vms/:id" element={<VmPage />} />
-              {/* <Route path="/order-vm" element={<VMList />} /> */}
+              <Route path="/order-vm" element={<OrderVM />} />
               <Route path="/billing" element={<Billing />} />
               {/* <Route path="/setting" element={<Dashboard />} /> */}
               <Route path="/change_password" element={<ChangePassword />} />

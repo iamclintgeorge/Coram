@@ -24,7 +24,7 @@ function DynamicSignup() {
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_admin_server}/api/check-root`,
-        { withCredentials: true }
+        { withCredentials: true },
       );
       setCheckroot(response.data.isRoot);
       // console.log(response.data.isRoot);
@@ -49,7 +49,7 @@ function DynamicSignup() {
         userData,
         {
           withCredentials: true,
-        }
+        },
       );
       console.log("Signup Response:", res);
 
@@ -77,7 +77,7 @@ function DynamicSignup() {
       {/* Branding - smaller */}
       <div className="absolute top-6 left-6 z-10">
         <div className="text-[#0C2340] font-playfair text-2xl">
-          <p>Coram</p>
+          <p>coram</p>
         </div>
       </div>
 
@@ -212,9 +212,7 @@ function DynamicSignup() {
 
         {/* Footer */}
         <div className="flex-shrink-0 py-3 text-center text-black/60 text-xs">
-          <p>
-            © 2025 Clint George, Mustansir Habil Bhagat. All rights reserved.
-          </p>
+          <p>© 2025 Coram. All rights reserved.</p>
         </div>
       </div>
     </div>
