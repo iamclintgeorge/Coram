@@ -14,27 +14,12 @@ const NavBar = () => {
 
   console.log("From Navbar", user);
 
-  useEffect(() => {
-    if (!user?.ID) {
-      setFacultyName("Guest"); // Fallback if no user
-      return;
-    }
-
-    // const fetchFacultyName = async () => {
-    //   try {
-    //     const response = await axios.get(
-    //       `${import.meta.env.VITE_admin_server}/api/profile/${user.id}`,
-    //       { withCredentials: true }
-    //     );
-    //     setFacultyName(response.data.name || "Unknown"); // Set name or fallback
-    //   } catch (error) {
-    //     console.error("Fetch faculty name error:", error);
-    //     setFacultyName("Undefined");
-    //   }
-    // };
-
-    // fetchFacultyName();
-  }, []); // Re-run if user changes
+  // useEffect(() => {
+  //   if (!user?.ID) {
+  //     setFacultyName("Guest"); // Fallback if no user
+  //     return;
+  //   }
+  // }, []);
 
   const handleUserClick = () => {
     setIsUserOpen((prevstate) => !prevstate);
@@ -58,8 +43,6 @@ const NavBar = () => {
   if (!user) {
     return null;
   }
-
-  // console.log(user.role); #AE9142
 
   return (
     <>

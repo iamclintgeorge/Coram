@@ -26,7 +26,7 @@ function Login() {
         userData,
         {
           withCredentials: true,
-        }
+        },
       );
       // const res = await axios.post(
       //   `http://localhost:8080/api/login`,
@@ -41,7 +41,7 @@ function Login() {
       console.error("Login failed:", err);
       setError(
         err.response?.data?.message ||
-          "Login failed. Please check your credentials and try again."
+          "Login failed. Please check your credentials and try again.",
       );
     } finally {
       setLoading(false);
@@ -60,7 +60,7 @@ function Login() {
       {/* Institution branding - smaller */}
       <div className="absolute top-6 left-6 z-10">
         <div className="text-[#0C2340] font-playfair text-2xl">
-          <p>Coram</p>
+          <p>coram</p>
         </div>
       </div>
 
@@ -329,9 +329,7 @@ function Login() {
 
         {/* Fixed footer at bottom with minimal spacing */}
         <div className="flex-shrink-0 py-3 text-center text-black/60 text-xs">
-          <p>
-            © 2025 Clint George, Mustansir Habil Bhagat. All rights reserved.
-          </p>
+          <p>© 2025 Coram. All rights reserved.</p>
         </div>
       </div>
     </div>
