@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import SpecList from "../../components/specList";
 import SpecCard from "../../components/specCard";
 import { CheckCircle, Cpu, Server, HardDrive, Activity } from "lucide-react";
 import axios from "axios";
@@ -17,7 +19,7 @@ const Dashboard = () => {
         `${
           import.meta.env.VITE_admin_server
         }/api/proxmox/fetchNodeStats/${nodeName}`,
-        { withCredentials: true }
+        { withCredentials: true },
       );
       setStats(response.data);
     } catch (err) {
@@ -88,88 +90,20 @@ const Dashboard = () => {
             </h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
               {stats.map((vm) => (
-                <div
-                  key={vm.vmid}
-                  className="bg-white border border-gray-400 overflow-hidden hover:shadow-lg transition-shadow duration-300"
-                >
-                  {/* VM Header */}
-                  <div className="px-5 py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <Server className="text-black mr-5" size={24} />
-                        <div>
-                          <h3 className="text-xl font-medium text-black truncate max-w-[200px]">
-                            {vm.name}
-                          </h3>
-                          <p className="text-black text-sm">ID: {vm.vmid}</p>
-                        </div>
-                      </div>
-                      <span
-                        className={`px-3 py-1 text-xs font-semibold ${
-                          vm.status === "running"
-                            ? "bg-green-700 text-white"
-                            : "bg-red-700 text-white"
-                        }`}
-                      >
-                        {vm.status}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* VM Stats */}
-                  <div className="p-5 space-y-3">
-                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">CPU</span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-800">
-                          {((vm.cpu || 0) * 100).toFixed(1)}%
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          {vm.cpus || 0} cores
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">Memory</span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-800">
-                          {((vm.mem || 0) / 1024 ** 2).toFixed(0)} MB
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          / {((vm.maxmem || 0) / 1024 ** 2).toFixed(0)} MB
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between py-2 border-b border-gray-100">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">Disk</span>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-gray-800">
-                          {formatBytes(vm.disk)}
-                        </p>
-                        <p className="text-xs text-gray-500">
-                          / {formatBytes(vm.maxdisk)}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center justify-between py-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-sm text-gray-600">Uptime</span>
-                      </div>
-                      <p className="text-sm font-semibold text-gray-800">
-                        {formatUptime(vm.uptime)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
+                <Link to={`/vms/${vm.vmid}`} key={vm.vmid} className="flex">
+                  <SpecList
+                    name={vm.name}
+                    vmid={vm.vmid}
+                    cpu={vm.cpu}
+                    cpus={vm.cpus}
+                    mem={vm.mem}
+                    maxmem={vm.maxmem}
+                    disk={vm.disk}
+                    maxdisk={vm.maxdisk}
+                    status={vm.status}
+                    uptime={vm.uptime}
+                  />
+                </Link>
               ))}
             </div>
           </div>
