@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { DollarSign, Cpu, HardDrive, Activity, Server } from "lucide-react";
+import { Server } from "lucide-react";
 
 const Billing = () => {
   const [stats, setStats] = useState(null);
@@ -27,7 +27,7 @@ const Billing = () => {
         `${
           import.meta.env.VITE_admin_server
         }/api/proxmox/fetchNodeStats/${nodeName}`,
-        { withCredentials: true }
+        { withCredentials: true },
       );
       setStats(response.data);
     } catch (err) {
@@ -95,7 +95,6 @@ const Billing = () => {
       <div className="p-8">
         <h1 className="text-3xl font-bold text-gray-800 mb-6">Billing</h1>
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
-          <DollarSign className="mx-auto mb-4 text-yellow-600" size={48} />
           <p className="text-gray-600 text-lg">
             No active VMs found for billing
           </p>
@@ -107,10 +106,10 @@ const Billing = () => {
   return (
     <div className="p-8 max-w-7xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">
-          Billing Dashboard
+        <h1 className="text-3xl font-playfair font-bold text-black mb-2">
+          Usage Invoice
         </h1>
-        <p className="text-gray-600">
+        <p className="text-gray-500 font-inter">
           Resource usage and charges for your virtual machines
         </p>
       </div>
@@ -121,27 +120,27 @@ const Billing = () => {
         return (
           <div
             key={vm.vmid}
-            className="bg-white rounded-xl shadow-lg border border-gray-200 mb-6 overflow-hidden"
+            className="bg-white border border-gray-400 shadow-lg  mb-6 overflow-hidden"
           >
             {/* VM Header */}
-            <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-6 py-4">
+            <div className="px-6 py-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">
-                  <Server className="text-white" size={24} />
+                  <Server className="text-black" size={24} />
                   <div>
-                    <h2 className="text-xl font-semibold text-white">
+                    <h2 className="text-xl font-semibold text-black">
                       {vm.name}
                     </h2>
-                    <p className="text-blue-100 text-sm">VM ID: {vm.vmid}</p>
+                    <p className="text-black text-sm">VM ID: {vm.vmid}</p>
                   </div>
                 </div>
                 <div className="text-right">
-                  <p className="text-blue-100 text-sm">Status</p>
+                  {/* <p className="text-black text-sm">Status</p> */}
                   <span
-                    className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+                    className={`inline-block px-3 py-1 rounded-sm text-sm font-semibold ${
                       vm.status === "running"
-                        ? "bg-green-400 text-green-900"
-                        : "bg-red-400 text-red-900"
+                        ? "bg-green-700 text-white"
+                        : "bg-red-700 text-white"
                     }`}
                   >
                     {vm.status}
@@ -151,14 +150,13 @@ const Billing = () => {
             </div>
 
             {/* Resource Usage Section */}
-            <div className="px-6 py-5 bg-gray-50 border-b border-gray-200">
+            <div className="px-6 py-5 bg-white border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-4">
                 Resource Usage
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="bg-white p-4 rounded-lg border border-gray-200">
                   <div className="flex items-center gap-3 mb-2">
-                    <Cpu className="text-blue-600" size={20} />
                     <span className="text-sm font-medium text-gray-600">
                       CPU Usage
                     </span>
@@ -173,7 +171,6 @@ const Billing = () => {
 
                 <div className="bg-white p-4 rounded-lg border border-gray-200">
                   <div className="flex items-center gap-3 mb-2">
-                    <Activity className="text-green-600" size={20} />
                     <span className="text-sm font-medium text-gray-600">
                       Memory Usage
                     </span>
@@ -188,7 +185,6 @@ const Billing = () => {
 
                 <div className="bg-white p-4 rounded-lg border border-gray-200">
                   <div className="flex items-center gap-3 mb-2">
-                    <HardDrive className="text-purple-600" size={20} />
                     <span className="text-sm font-medium text-gray-600">
                       Disk Usage
                     </span>
@@ -203,7 +199,6 @@ const Billing = () => {
 
                 <div className="bg-white p-4 rounded-lg border border-gray-200">
                   <div className="flex items-center gap-3 mb-2">
-                    <Server className="text-orange-600" size={20} />
                     <span className="text-sm font-medium text-gray-600">
                       Uptime
                     </span>
@@ -259,11 +254,11 @@ const Billing = () => {
                     ${charges.uptimeCharge.toFixed(4)}
                   </span>
                 </div>
-                <div className="flex justify-between items-center py-3 mt-2 bg-blue-50 px-4 rounded-lg">
+                <div className="flex justify-between items-center py-3 mt-2 bg-gray-50 px-4 rounded-sm">
                   <span className="text-lg font-bold text-gray-800">
                     Total Charges
                   </span>
-                  <span className="text-2xl font-bold text-blue-600">
+                  <span className="text-2xl font-bold text-black">
                     ${charges.total.toFixed(4)}
                   </span>
                 </div>
