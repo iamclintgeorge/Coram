@@ -25,6 +25,11 @@ const DynamicSideBar = () => {
             <p className="pl-5 flex justify-between pb-3">Overview</p>
           </div>
         </Link>
+        <Link to="/template">
+          <div className="mr-8 hover:border-b-[1px] border-gray-500">
+            <p className="pl-5 flex justify-between pb-3">Templates</p>
+          </div>
+        </Link>
         <Link to="/order-vm">
           <div className="mr-8 hover:border-b-[1px] border-gray-500">
             <p className="pl-5 flex justify-between pb-3">Order VM</p>
@@ -32,12 +37,12 @@ const DynamicSideBar = () => {
         </Link>
         <Link to="/vms">
           <div className="mr-8 hover:border-b-[1px] border-gray-500">
-            <p className="pl-5 flex justify-between pb-3">My VMs</p>
+            <p className="pl-5 flex justify-between pb-3">View VMs</p>
           </div>
         </Link>
         <Link to="/billing">
           <div className="mr-8 hover:border-b-[1px] border-gray-500">
-            <p className="pl-5 flex justify-between pb-3">Billing</p>
+            <p className="pl-5 flex justify-between pb-3">Invoice</p>
           </div>
         </Link>
         <Link to="/signup">

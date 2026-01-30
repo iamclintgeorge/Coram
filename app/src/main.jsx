@@ -17,6 +17,8 @@ import Error404 from "./pages/Error_Pages/error404";
 import Error403 from "./pages/Error_Pages/error403";
 import AdminLayout from "./layout/adminLayout";
 import Dashboard from "./pages/Dashboard/dashboard";
+import SettingsPage from "./pages/settingsPage";
+import TemplatePage from "./pages/templatePage";
 import { AuthProvider } from "./services/useAuthCheck";
 // import PrivateRoute from "./services/privateRoute";
 import ProfilePage from "./pages/ProfilePage/profilePage";
@@ -50,7 +52,8 @@ const App = () => {
               <Route path="/vms/:id" element={<VmPage />} />
               <Route path="/order-vm" element={<OrderVM />} />
               <Route path="/billing" element={<Billing />} />
-              {/* <Route path="/setting" element={<Dashboard />} /> */}
+              <Route path="/setting" element={<SettingsPage />} />
+              <Route path="/template" element={<TemplatePage />} />
               <Route path="/change_password" element={<ChangePassword />} />
             </Route>
             {/* </Route> */}
