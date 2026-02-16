@@ -46,12 +46,14 @@ const Dashboard = () => {
   return (
     <div className="p-8">
       {!stats ? (
-        <div className="text-center py-12 bg-gray-50 rounded-lg border border-gray-200">
-          <Server className="mx-auto mb-4 text-gray-400" size={64} />
-          <h2 className="text-2xl font-bold text-gray-700 mb-2">
+        <div className="text-center py-12 ">
+          {/* <Server className="mx-auto mb-4 text-gray-400" size={64} /> */}
+          <h2 className="text-2xl font-inter font-medium text-black mb-2">
             No Active VMs
           </h2>
-          <p className="text-gray-500">You don't have any active VMs!</p>
+          <p className="text-gray-500 font-inter">
+            You don't have any active VMs!
+          </p>
         </div>
       ) : (
         <>

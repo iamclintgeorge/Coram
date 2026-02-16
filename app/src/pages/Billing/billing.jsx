@@ -93,7 +93,9 @@ const Billing = () => {
   if (!stats || stats.length === 0) {
     return (
       <div className="p-8">
-        <h1 className="text-3xl font-bold text-gray-800 mb-6">Billing</h1>
+        <h1 className="text-3xl font-inter font-semibold text-gray-800 mb-6">
+          Billing
+        </h1>
         <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
           <p className="text-gray-600 text-lg">
             No active VMs found for billing

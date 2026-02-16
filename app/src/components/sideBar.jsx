@@ -85,7 +85,8 @@ const menuItems = [
 
 const DynamicSideBar = () => {
   const { user } = useAuth();
-  const userRole = user.userName; //Change this to user.Role later
+  const userRole = user?.UserName; //Change this to user.Role later
+  // console.log("From SideBar", userRole, user);
   if (!user) return null;
 
   return (
