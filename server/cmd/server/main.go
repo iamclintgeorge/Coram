@@ -25,6 +25,7 @@ func main() {
 	)
 	
 	r := gin.Default()
+	// r.Static("/", "./dist") //Use only during production environment
 	
 	// CORS - Must be before routes
 	r.Use(cors.New(cors.Config{
