@@ -9,7 +9,7 @@ const SpecCard = ({ title, value, icon }) => {
       <div className="flex items-center justify-center w-full h-20 bg-gray-100 rounded-lg mb-4">
         <IconComponent className="w-10 h-10 text-red-800" />
       </div>
-      <h3 className="text-lg font-inter font-semibold text-gray-800 mb-2">
+      <h3 className="text-lg font-inter font-medium text-gray-800 mb-2">
         {title}
       </h3>
       {value !== undefined && (

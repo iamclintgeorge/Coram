@@ -59,7 +59,7 @@ const Dashboard = () => {
         <>
           {/* Quick Stats Section */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            <h2 className="text-2xl font-inter font-medium text-black mb-4">
               Quick Stats
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -87,7 +87,7 @@ const Dashboard = () => {
 
           {/* Your Virtual Machines Section */}
           <div>
-            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+            <h2 className="text-2xl font-inter font-medium text-black mb-4">
               Your Virtual Machines
             </h2>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">

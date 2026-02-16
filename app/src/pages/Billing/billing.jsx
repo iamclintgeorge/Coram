@@ -6,6 +6,8 @@ const Billing = () => {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const nodeName = "pve";
+  // const currency = "$";
+  const currency = "₹";
 
   // Base unit costs (arbitrary values)
   const UNIT_COSTS = {
@@ -106,9 +108,9 @@ const Billing = () => {
   }
 
   return (
-    <div className="p-8 max-w-7xl mx-auto">
+    <div className="p-8 max-w-7xl mx-auto font-inter">
       <div className="mb-8">
-        <h1 className="text-3xl font-playfair font-bold text-black mb-2">
+        <h1 className="text-3xl font-inter font-medium text-black mb-2">
           Usage Invoice
         </h1>
         <p className="text-gray-500 font-inter">
@@ -130,7 +132,7 @@ const Billing = () => {
                 <div className="flex items-center gap-3">
                   <Server className="text-black" size={24} />
                   <div>
-                    <h2 className="text-xl font-semibold text-black">
+                    <h2 className="text-xl font-inter font-semibold text-black">
                       {vm.name}
                     </h2>
                     <p className="text-black text-sm">VM ID: {vm.vmid}</p>
@@ -153,45 +155,45 @@ const Billing = () => {
 
             {/* Resource Usage Section */}
             <div className="px-6 py-5 bg-white border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
+              <h3 className="text-lg font-inter font-medium text-black mb-4">
                 Resource Usage
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="bg-white p-4 rounded-lg border border-gray-200">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-sm font-medium text-gray-600">
+                    <span className="text-sm font-inter font-medium text-gray-600">
                       CPU Usage
                     </span>
                   </div>
-                  <p className="text-2xl font-bold text-gray-800">
+                  <p className="text-2xl font-inter font-semibold text-gray-800">
                     {((vm.cpu || 0) * 100).toFixed(2)}%
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs font-inter text-gray-500 mt-1">
                     {vm.cpus || 0} cores allocated
                   </p>
                 </div>
 
                 <div className="bg-white p-4 rounded-lg border border-gray-200">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-sm font-medium text-gray-600">
+                    <span className="text-sm font-inter font-medium text-gray-600">
                       Memory Usage
                     </span>
                   </div>
-                  <p className="text-2xl font-bold text-gray-800">
+                  <p className="text-2xl font-inter font-semibold text-gray-800">
                     {((vm.mem || 0) / 1024 ** 2).toFixed(2)} MB
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">
+                  <p className="text-xs font-inter text-gray-500 mt-1">
                     of {((vm.maxmem || 0) / 1024 ** 2).toFixed(2)} MB allocated
                   </p>
                 </div>
 
                 <div className="bg-white p-4 rounded-lg border border-gray-200">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-sm font-medium text-gray-600">
+                    <span className="text-sm font-inter font-medium text-gray-600">
                       Disk Usage
                     </span>
                   </div>
-                  <p className="text-2xl font-bold text-gray-800">
+                  <p className="text-2xl font-inter font-semibold text-gray-800">
                     {formatBytes(vm.disk)}
                   </p>
                   <p className="text-xs text-gray-500 mt-1">
@@ -205,7 +207,7 @@ const Billing = () => {
                       Uptime
                     </span>
                   </div>
-                  <p className="text-2xl font-bold text-gray-800">
+                  <p className="text-2xl font-semibold text-gray-800">
                     {formatUptime(vm.uptime)}
                   </p>
                 </div>
@@ -221,13 +223,15 @@ const Billing = () => {
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <span className="text-gray-600">CPU Usage Charge</span>
                   <span className="font-semibold text-gray-800">
-                    ${charges.cpuCharge.toFixed(4)}
+                    {currency}
+                    {charges.cpuCharge.toFixed(4)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <span className="text-gray-600">Memory Usage Charge</span>
                   <span className="font-semibold text-gray-800">
-                    ${charges.ramCharge.toFixed(4)}
+                    {currency}
+                    {charges.ramCharge.toFixed(4)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
@@ -235,33 +239,38 @@ const Billing = () => {
                     Memory Allocation Charge
                   </span>
                   <span className="font-semibold text-gray-800">
-                    ${charges.maxRamCharge.toFixed(4)}
+                    {currency}
+                    {charges.maxRamCharge.toFixed(4)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <span className="text-gray-600">Disk Usage Charge</span>
                   <span className="font-semibold text-gray-800">
-                    ${charges.diskCharge.toFixed(4)}
+                    {currency}
+                    {charges.diskCharge.toFixed(4)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <span className="text-gray-600">Disk Allocation Charge</span>
                   <span className="font-semibold text-gray-800">
-                    ${charges.maxDiskCharge.toFixed(4)}
+                    {currency}
+                    {charges.maxDiskCharge.toFixed(4)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-2 border-b border-gray-100">
                   <span className="text-gray-600">Uptime Charge</span>
                   <span className="font-semibold text-gray-800">
-                    ${charges.uptimeCharge.toFixed(4)}
+                    {currency}
+                    {charges.uptimeCharge.toFixed(4)}
                   </span>
                 </div>
                 <div className="flex justify-between items-center py-3 mt-2 bg-gray-50 px-4 rounded-sm">
-                  <span className="text-lg font-bold text-gray-800">
+                  <span className="text-lg font-semibold text-gray-800">
                     Total Charges
                   </span>
-                  <span className="text-2xl font-bold text-black">
-                    ${charges.total.toFixed(4)}
+                  <span className="text-2xl font-semibold text-black">
+                    {currency}
+                    {charges.total.toFixed(4)}
                   </span>
                 </div>
               </div>
@@ -277,37 +286,43 @@ const Billing = () => {
                   <div className="bg-white p-3 rounded border border-gray-200">
                     <p className="text-gray-600">CPU Usage</p>
                     <p className="font-semibold text-gray-800">
-                      ${UNIT_COSTS.cpu}/% per hour
+                      {currency}
+                      {UNIT_COSTS.cpu}/ per hour
                     </p>
                   </div>
                   <div className="bg-white p-3 rounded border border-gray-200">
                     <p className="text-gray-600">RAM Usage</p>
                     <p className="font-semibold text-gray-800">
-                      ${UNIT_COSTS.ram}/MB per hour
+                      {currency}
+                      {UNIT_COSTS.ram}/MB per hour
                     </p>
                   </div>
                   <div className="bg-white p-3 rounded border border-gray-200">
                     <p className="text-gray-600">RAM Allocation</p>
                     <p className="font-semibold text-gray-800">
-                      ${UNIT_COSTS.maxmem}/MB per hour
+                      {currency}
+                      {UNIT_COSTS.maxmem}/MB per hour
                     </p>
                   </div>
                   <div className="bg-white p-3 rounded border border-gray-200">
                     <p className="text-gray-600">Disk Usage</p>
                     <p className="font-semibold text-gray-800">
-                      ${UNIT_COSTS.disk}/GB per hour
+                      {currency}
+                      {UNIT_COSTS.disk}/GB per hour
                     </p>
                   </div>
                   <div className="bg-white p-3 rounded border border-gray-200">
                     <p className="text-gray-600">Disk Allocation</p>
                     <p className="font-semibold text-gray-800">
-                      ${UNIT_COSTS.maxdisk}/GB per hour
+                      {currency}
+                      {UNIT_COSTS.maxdisk}/GB per hour
                     </p>
                   </div>
                   <div className="bg-white p-3 rounded border border-gray-200">
                     <p className="text-gray-600">Uptime</p>
                     <p className="font-semibold text-gray-800">
-                      ${UNIT_COSTS.uptime}/hour
+                      {currency}
+                      {UNIT_COSTS.uptime}/hour
                     </p>
                   </div>
                 </div>
