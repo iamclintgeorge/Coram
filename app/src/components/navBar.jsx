@@ -10,7 +10,6 @@ const NavBar = () => {
   const [isUserOpen, setIsUserOpen] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
-  const logoText = "coram";
 
   console.log("From Navbar", user);
 
@@ -30,7 +29,7 @@ const NavBar = () => {
       await axios.post(
         `${import.meta.env.VITE_admin_server}/api/signout`,
         {},
-        { withCredentials: true }
+        { withCredentials: true },
       );
       console.log("Successfully Logged Out");
       navigate("/login");
@@ -54,7 +53,7 @@ const NavBar = () => {
               <Link to="/dashboard" className="flex items-center gap-2">
                 <img src={logo} alt="Logo" className="w-8" />
                 <div className="text-gray-600 pb-1 font-playfair font-medium text-2xl">
-                  {logoText}
+                  coram
                 </div>
               </Link>
             </div>
