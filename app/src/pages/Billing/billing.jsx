@@ -1,92 +1,134 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Server } from "lucide-react";
+import { Server, RefreshCw, FileText, TrendingUp } from "lucide-react";
+import usePolling from "../../hooks/usePolling";
+import {
+  formatBytes,
+  formatUptime,
+  formatPercentage,
+  formatCurrency,
+  timeAgo,
+} from "../../utils/formatters";
+
+const POLL_INTERVAL = 30000;
 
 const Billing = () => {
-  const [stats, setStats] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [billingConfig, setBillingConfig] = useState(null);
   const nodeName = "pve";
-  // const currency = "$";
-  const currency = "₹";
 
-  // Base unit costs (arbitrary values)
-  const UNIT_COSTS = {
-    cpu: 0.05, // $0.05 per CPU percentage per hour
-    ram: 0.002, // $0.002 per MB per hour
-    disk: 0.001, // $0.001 per GB per hour
-    maxmem: 0.002, // $0.002 per MB allocated
-    maxdisk: 0.001, // $0.001 per GB allocated
-    uptime: 0.01, // $0.01 per hour uptime
-  };
-
+  // Fetch billing config
   useEffect(() => {
-    fetchVMStats();
+    const fetchConfig = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_admin_server}/api/billing/config`,
+          { withCredentials: true },
+        );
+        setBillingConfig(response.data);
+      } catch (err) {
+        // Use defaults if backend not available
+        setBillingConfig({
+          currency: "₹",
+          cpu_rate: 0.05,
+          ram_rate: 0.002,
+          ram_alloc_rate: 0.002,
+          disk_rate: 0.001,
+          disk_alloc_rate: 0.001,
+          uptime_rate: 0.01,
+        });
+      }
+    };
+    fetchConfig();
   }, []);
 
-  const fetchVMStats = async () => {
-    try {
-      const response = await axios.get(
-        `${
-          import.meta.env.VITE_admin_server
-        }/api/proxmox/fetchNodeStats/${nodeName}`,
-        { withCredentials: true },
-      );
-      setStats(response.data);
-    } catch (err) {
-      console.log("Error while fetching VM Stats:", err.message);
-    } finally {
-      setLoading(false);
-    }
+  const fetchStats = async () => {
+    const response = await axios.get(
+      `${import.meta.env.VITE_admin_server}/api/proxmox/fetchNodeStats/${nodeName}`,
+      { withCredentials: true },
+    );
+    return response.data;
   };
 
-  const formatBytes = (bytes) => {
-    if (!bytes) return "0 GB";
-    const gb = (bytes / 1024 ** 3).toFixed(2);
-    return `${gb} GB`;
-  };
-
-  const formatUptime = (seconds) => {
-    if (!seconds) return "0h";
-    const hours = (seconds / 3600).toFixed(2);
-    return `${hours}h`;
-  };
+  const {
+    data: stats,
+    loading,
+    lastUpdated,
+    refresh,
+  } = usePolling(fetchStats, POLL_INTERVAL);
 
   const calculateCharges = (vm) => {
-    const cpuCharge = (vm.cpu || 0) * 100 * UNIT_COSTS.cpu;
-    const ramCharge = ((vm.mem || 0) / 1024 ** 2) * UNIT_COSTS.ram;
-    const maxRamCharge = ((vm.maxmem || 0) / 1024 ** 2) * UNIT_COSTS.maxmem;
-    const diskCharge = ((vm.disk || 0) / 1024 ** 3) * UNIT_COSTS.disk;
-    const maxDiskCharge = ((vm.maxdisk || 0) / 1024 ** 3) * UNIT_COSTS.maxdisk;
-    const uptimeCharge = ((vm.uptime || 0) / 3600) * UNIT_COSTS.uptime;
+    if (!billingConfig) return null;
+    const c = billingConfig;
+    const cpuCharge = (vm.cpu || 0) * 100 * c.cpu_rate;
+    const ramCharge = ((vm.mem || 0) / 1024 ** 2) * c.ram_rate;
+    const ramAllocCharge = ((vm.maxmem || 0) / 1024 ** 2) * c.ram_alloc_rate;
+    const diskCharge = ((vm.disk || 0) / 1024 ** 3) * c.disk_rate;
+    const diskAllocCharge = ((vm.maxdisk || 0) / 1024 ** 3) * c.disk_alloc_rate;
+    const uptimeCharge = ((vm.uptime || 0) / 3600) * c.uptime_rate;
 
     const total =
       cpuCharge +
       ramCharge +
-      maxRamCharge +
+      ramAllocCharge +
       diskCharge +
-      maxDiskCharge +
+      diskAllocCharge +
       uptimeCharge;
 
     return {
-      cpuCharge,
-      ramCharge,
-      maxRamCharge,
-      diskCharge,
-      maxDiskCharge,
-      uptimeCharge,
+      items: [
+        {
+          label: "CPU Usage",
+          value: formatPercentage(vm.cpu),
+          charge: cpuCharge,
+        },
+        {
+          label: "Memory Usage",
+          value: formatBytes(vm.mem),
+          charge: ramCharge,
+        },
+        {
+          label: "Memory Allocated",
+          value: formatBytes(vm.maxmem),
+          charge: ramAllocCharge,
+        },
+        {
+          label: "Disk Usage",
+          value: formatBytes(vm.disk),
+          charge: diskCharge,
+        },
+        {
+          label: "Disk Allocated",
+          value: formatBytes(vm.maxdisk),
+          charge: diskAllocCharge,
+        },
+        {
+          label: "Uptime",
+          value: formatUptime(vm.uptime),
+          charge: uptimeCharge,
+        },
+      ],
       total,
     };
   };
 
-  if (loading) {
+  const currency = billingConfig?.currency || "₹";
+
+  // Grand total across all VMs
+  const grandTotal =
+    stats && billingConfig
+      ? stats.reduce((sum, vm) => {
+          const charges = calculateCharges(vm);
+          return sum + (charges?.total || 0);
+        }, 0)
+      : 0;
+
+  if (loading || !billingConfig) {
     return (
       <div className="p-8">
-        <div className="animate-pulse">
-          <div className="h-8 bg-gray-200 rounded w-1/4 mb-6"></div>
-          <div className="space-y-4">
-            <div className="h-32 bg-gray-200 rounded"></div>
-            <div className="h-32 bg-gray-200 rounded"></div>
-          </div>
+        <div className="animate-pulse space-y-6">
+          <div className="h-8 bg-gray-200 rounded-xl w-1/4" />
+          <div className="h-32 bg-gray-200 rounded-2xl" />
+          <div className="h-64 bg-gray-200 rounded-2xl" />
         </div>
       </div>
     );
@@ -94,11 +136,10 @@ const Billing = () => {
 
   if (!stats || stats.length === 0) {
     return (
-      <div className="p-8">
-        <h1 className="text-3xl font-inter font-semibold text-gray-800 mb-6">
-          Billing
-        </h1>
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+      <div className="p-8 max-w-7xl mx-auto">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Billing</h1>
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center mt-6">
+          <FileText className="w-12 h-12 text-amber-400 mx-auto mb-4" />
           <p className="text-gray-600 text-lg">
             No active VMs found for billing
           </p>
@@ -109,228 +150,197 @@ const Billing = () => {
 
   return (
     <div className="p-8 max-w-7xl mx-auto font-inter">
-      <div className="mb-8">
-        <h1 className="text-3xl font-inter font-medium text-black mb-2">
-          Usage Invoice
-        </h1>
-        <p className="text-gray-500 font-inter">
-          Resource usage and charges for your virtual machines
-        </p>
+      {/* Header */}
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+            Usage Invoice
+          </h1>
+          <p className="text-gray-500 mt-1">
+            Resource usage and charges for your virtual machines
+          </p>
+        </div>
+        <div className="flex items-center gap-4">
+          {lastUpdated && (
+            <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              {timeAgo(lastUpdated)}
+            </div>
+          )}
+          <button
+            onClick={refresh}
+            className="p-2.5 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 transition-colors"
+          >
+            <RefreshCw className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
-      {stats.map((vm) => {
-        const charges = calculateCharges(vm);
+      {/* Grand Total Card */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-8 mb-8 text-white">
+        <div className="absolute top-0 right-0 w-48 h-48 -mr-12 -mt-12 rounded-full bg-white/5 blur-3xl" />
+        <div className="relative z-10 flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-white/60 mb-1">
+              Total Across All VMs
+            </p>
+            <p className="text-4xl font-bold tracking-tight">
+              {formatCurrency(grandTotal, currency, 2)}
+            </p>
+            <p className="text-sm text-white/50 mt-2">
+              {stats.length} virtual machines
+            </p>
+          </div>
+          <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-sm">
+            <TrendingUp className="w-8 h-8 text-white/80" />
+          </div>
+        </div>
+      </div>
 
-        return (
-          <div
-            key={vm.vmid}
-            className="bg-white border border-gray-400 shadow-lg  mb-6 overflow-hidden"
-          >
-            {/* VM Header */}
-            <div className="px-6 py-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Server className="text-black" size={24} />
+      {/* Per-VM Invoice Cards */}
+      <div className="space-y-6">
+        {stats.map((vm) => {
+          const charges = calculateCharges(vm);
+          if (!charges) return null;
+
+          return (
+            <div
+              key={vm.vmid}
+              className="border-2 border-gray-400 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
+            >
+              {/* VM Header */}
+              <div className="px-6 py-5 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div
+                    className={`p-3 rounded-xl ${vm.status === "running" ? "bg-emerald-50" : "bg-gray-100"}`}
+                  >
+                    <Server
+                      className={`w-5 h-5 ${vm.status === "running" ? "text-emerald-600" : "text-gray-700"}`}
+                    />
+                  </div>
                   <div>
-                    <h2 className="text-xl font-inter font-semibold text-black">
+                    <h2 className="text-lg font-semibold text-gray-900">
                       {vm.name}
                     </h2>
-                    <p className="text-black text-sm">VM ID: {vm.vmid}</p>
+                    <p className="text-sm text-gray-700 font-mono">
+                      VM ID: {vm.vmid}
+                    </p>
                   </div>
                 </div>
-                <div className="text-right">
-                  {/* <p className="text-black text-sm">Status</p> */}
+                <span
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold ${
+                    vm.status === "running"
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-red-100 text-red-700"
+                  }`}
+                >
                   <span
-                    className={`inline-block px-3 py-1 rounded-sm text-sm font-semibold ${
-                      vm.status === "running"
-                        ? "bg-green-700 text-white"
-                        : "bg-red-700 text-white"
-                    }`}
-                  >
-                    {vm.status}
-                  </span>
+                    className={`w-1.5 h-1.5 rounded-full ${vm.status === "running" ? "bg-emerald-500" : "bg-red-500"}`}
+                  />
+                  {vm.status}
+                </span>
+              </div>
+
+              {/* Charges Breakdown */}
+              <div className="px-6 pb-6">
+                <div className="bg-white rounded-xl overflow-hidden">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-200">
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-black uppercase tracking-wider">
+                          Resource
+                        </th>
+                        <th className="text-right px-4 py-3 text-xs font-semibold text-black uppercase tracking-wider">
+                          Usage
+                        </th>
+                        <th className="text-right px-4 py-3 text-xs font-semibold text-black uppercase tracking-wider">
+                          Charge
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {charges.items.map((item, i) => (
+                        <tr
+                          key={i}
+                          className="border-b border-gray-100 last:border-0"
+                        >
+                          <td className="px-4 py-3 text-gray-800">
+                            {item.label}
+                          </td>
+                          <td className="px-4 py-3 text-right text-gray-700">
+                            {item.value}
+                          </td>
+                          <td className="px-4 py-3 text-right font-semibold text-gray-800">
+                            {formatCurrency(item.charge, currency)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                    <tfoot>
+                      <tr className="bg-gray-100">
+                        <td
+                          colSpan="2"
+                          className="px-4 py-3 font-semibold text-gray-800"
+                        >
+                          Total
+                        </td>
+                        <td className="px-4 py-3 text-right font-bold text-lg text-gray-900">
+                          {formatCurrency(charges.total, currency)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
                 </div>
               </div>
             </div>
+          );
+        })}
+      </div>
 
-            {/* Resource Usage Section */}
-            <div className="px-6 py-5 bg-white border-b border-gray-200">
-              <h3 className="text-lg font-inter font-medium text-black mb-4">
-                Resource Usage
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-sm font-inter font-medium text-gray-600">
-                      CPU Usage
-                    </span>
-                  </div>
-                  <p className="text-2xl font-inter font-semibold text-gray-800">
-                    {((vm.cpu || 0) * 100).toFixed(2)}%
-                  </p>
-                  <p className="text-xs font-inter text-gray-500 mt-1">
-                    {vm.cpus || 0} cores allocated
-                  </p>
-                </div>
-
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-sm font-inter font-medium text-gray-600">
-                      Memory Usage
-                    </span>
-                  </div>
-                  <p className="text-2xl font-inter font-semibold text-gray-800">
-                    {((vm.mem || 0) / 1024 ** 2).toFixed(2)} MB
-                  </p>
-                  <p className="text-xs font-inter text-gray-500 mt-1">
-                    of {((vm.maxmem || 0) / 1024 ** 2).toFixed(2)} MB allocated
-                  </p>
-                </div>
-
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-sm font-inter font-medium text-gray-600">
-                      Disk Usage
-                    </span>
-                  </div>
-                  <p className="text-2xl font-inter font-semibold text-gray-800">
-                    {formatBytes(vm.disk)}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-1">
-                    of {formatBytes(vm.maxdisk)} allocated
-                  </p>
-                </div>
-
-                <div className="bg-white p-4 rounded-lg border border-gray-200">
-                  <div className="flex items-center gap-3 mb-2">
-                    <span className="text-sm font-medium text-gray-600">
-                      Uptime
-                    </span>
-                  </div>
-                  <p className="text-2xl font-semibold text-gray-800">
-                    {formatUptime(vm.uptime)}
-                  </p>
-                </div>
-              </div>
+      {/* Rate Card */}
+      <div className="mt-8 border-2 border-gray-400 rounded-2xl p-6">
+        <h3 className="text-sm font-semibold text-black uppercase tracking-wider mb-4">
+          Current Rate Card
+        </h3>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {[
+            { label: "CPU", rate: billingConfig.cpu_rate, unit: "/% per hr" },
+            {
+              label: "RAM Usage",
+              rate: billingConfig.ram_rate,
+              unit: "/MB per hr",
+            },
+            {
+              label: "RAM Alloc",
+              rate: billingConfig.ram_alloc_rate,
+              unit: "/MB",
+            },
+            {
+              label: "Disk Usage",
+              rate: billingConfig.disk_rate,
+              unit: "/GB per hr",
+            },
+            {
+              label: "Disk Alloc",
+              rate: billingConfig.disk_alloc_rate,
+              unit: "/GB",
+            },
+            { label: "Uptime", rate: billingConfig.uptime_rate, unit: "/hr" },
+          ].map((r) => (
+            <div key={r.label} className="bg-white rounded-xl p-3">
+              <p className="text-xs text-gray-500 mb-1">{r.label}</p>
+              <p className="text-sm font-semibold text-gray-800">
+                {currency}
+                {r.rate}
+                {r.unit}
+              </p>
             </div>
-
-            {/* Billing Breakdown Section */}
-            <div className="px-6 py-5">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                Billing Breakdown
-              </h3>
-              <div className="space-y-3">
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-600">CPU Usage Charge</span>
-                  <span className="font-semibold text-gray-800">
-                    {currency}
-                    {charges.cpuCharge.toFixed(4)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Memory Usage Charge</span>
-                  <span className="font-semibold text-gray-800">
-                    {currency}
-                    {charges.ramCharge.toFixed(4)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-600">
-                    Memory Allocation Charge
-                  </span>
-                  <span className="font-semibold text-gray-800">
-                    {currency}
-                    {charges.maxRamCharge.toFixed(4)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Disk Usage Charge</span>
-                  <span className="font-semibold text-gray-800">
-                    {currency}
-                    {charges.diskCharge.toFixed(4)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Disk Allocation Charge</span>
-                  <span className="font-semibold text-gray-800">
-                    {currency}
-                    {charges.maxDiskCharge.toFixed(4)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-2 border-b border-gray-100">
-                  <span className="text-gray-600">Uptime Charge</span>
-                  <span className="font-semibold text-gray-800">
-                    {currency}
-                    {charges.uptimeCharge.toFixed(4)}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center py-3 mt-2 bg-gray-50 px-4 rounded-sm">
-                  <span className="text-lg font-semibold text-gray-800">
-                    Total Charges
-                  </span>
-                  <span className="text-2xl font-semibold text-black">
-                    {currency}
-                    {charges.total.toFixed(4)}
-                  </span>
-                </div>
-              </div>
-            </div>
-
-            {/* Rate Card Section */}
-            <div className="px-6 py-4 bg-gray-50 border-t border-gray-200">
-              <details className="cursor-pointer">
-                <summary className="text-sm font-semibold text-gray-700">
-                  View Rate Card
-                </summary>
-                <div className="mt-3 grid grid-cols-2 md:grid-cols-3 gap-3 text-xs">
-                  <div className="bg-white p-3 rounded border border-gray-200">
-                    <p className="text-gray-600">CPU Usage</p>
-                    <p className="font-semibold text-gray-800">
-                      {currency}
-                      {UNIT_COSTS.cpu}/ per hour
-                    </p>
-                  </div>
-                  <div className="bg-white p-3 rounded border border-gray-200">
-                    <p className="text-gray-600">RAM Usage</p>
-                    <p className="font-semibold text-gray-800">
-                      {currency}
-                      {UNIT_COSTS.ram}/MB per hour
-                    </p>
-                  </div>
-                  <div className="bg-white p-3 rounded border border-gray-200">
-                    <p className="text-gray-600">RAM Allocation</p>
-                    <p className="font-semibold text-gray-800">
-                      {currency}
-                      {UNIT_COSTS.maxmem}/MB per hour
-                    </p>
-                  </div>
-                  <div className="bg-white p-3 rounded border border-gray-200">
-                    <p className="text-gray-600">Disk Usage</p>
-                    <p className="font-semibold text-gray-800">
-                      {currency}
-                      {UNIT_COSTS.disk}/GB per hour
-                    </p>
-                  </div>
-                  <div className="bg-white p-3 rounded border border-gray-200">
-                    <p className="text-gray-600">Disk Allocation</p>
-                    <p className="font-semibold text-gray-800">
-                      {currency}
-                      {UNIT_COSTS.maxdisk}/GB per hour
-                    </p>
-                  </div>
-                  <div className="bg-white p-3 rounded border border-gray-200">
-                    <p className="text-gray-600">Uptime</p>
-                    <p className="font-semibold text-gray-800">
-                      {currency}
-                      {UNIT_COSTS.uptime}/hour
-                    </p>
-                  </div>
-                </div>
-              </details>
-            </div>
-          </div>
-        );
-      })}
+          ))}
+        </div>
+      </div>
     </div>
   );
 };

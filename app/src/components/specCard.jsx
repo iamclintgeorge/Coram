@@ -1,20 +1,24 @@
 import React from "react";
-import { Cpu, Server, CheckCircle } from "lucide-react";
+import { Server } from "lucide-react";
 
-const SpecCard = ({ title, value, icon }) => {
-  const IconComponent = icon || Server; // default icon
+const SpecCard = ({ title, value, icon, subtitle }) => {
+  const IconComponent = icon || Server;
 
   return (
-    <div className="flex flex-col items-center w-60 h-56 p-5 border-2 border-gray-400 shadow-lg hover:shadow-xl transition-all duration-200 ">
-      <div className="flex items-center justify-center w-full h-20 bg-gray-100 rounded-lg mb-4">
-        <IconComponent className="w-10 h-10 text-red-800" />
+    <div className="relative overflow-hidden bg-white border border-gray-200 rounded-2xl p-6 shadow-sm hover:shadow-lg hover:-translate-y-1 transition-all duration-300 group">
+      <div className="absolute top-0 right-0 w-24 h-24 -mr-6 -mt-6 rounded-full bg-gradient-to-br from-indigo-50 to-purple-50 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+      <div className="relative z-10">
+        <div className="flex items-center justify-center w-12 h-12 bg-gradient-to-br from-gray-50 to-gray-100 rounded-xl mb-4 group-hover:from-indigo-50 group-hover:to-purple-50 transition-all duration-300">
+          <IconComponent className="w-6 h-6 text-gray-600 group-hover:text-indigo-600 transition-colors" />
+        </div>
+        <p className="text-sm font-medium text-gray-500 mb-1">{title}</p>
+        {value !== undefined && (
+          <p className="text-2xl font-bold text-gray-900">{value}</p>
+        )}
+        {subtitle && (
+          <p className="text-xs text-gray-400 mt-1">{subtitle}</p>
+        )}
       </div>
-      <h3 className="text-lg font-inter font-medium text-gray-800 mb-2">
-        {title}
-      </h3>
-      {value !== undefined && (
-        <p className="text-gray-600 font-inter">{value}</p>
-      )}
     </div>
   );
 };

@@ -20,16 +20,20 @@ import Dashboard from "./pages/Dashboard/dashboard";
 import SettingsPage from "./pages/settingsPage";
 import TemplatePage from "./pages/templatePage";
 import { AuthProvider } from "./services/useAuthCheck";
-// import PrivateRoute from "./services/privateRoute";
 import ProfilePage from "./pages/ProfilePage/profilePage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-// VM Management - NEW
+// VM Management
 import VMList from "./pages/VirtualMachines/vmList";
 import VmPage from "./pages/VirtualMachines/vmPage";
 import Billing from "./pages/Billing/billing";
+import BillingSettings from "./pages/Billing/BillingSettings";
 import OrderVM from "./pages/OrderVM/orderVM";
+
+// Logs & Alerts
+import LogsPage from "./pages/Logs/LogsPage";
+import AlertsPage from "./pages/Alerts/AlertsPage";
 
 const App = () => {
   return (
@@ -43,7 +47,6 @@ const App = () => {
             <Route path="/forgot-password" element={<ForgotPassword />} />
 
             {/* Protected routes */}
-            {/* <Route element={<PrivateRoute />}> */}
             <Route path="/" element={<AdminLayout />}>
               <Route index element={<Navigate to="/dashboard" />} />
               <Route path="/dashboard" element={<Dashboard />} />
@@ -52,11 +55,13 @@ const App = () => {
               <Route path="/vms/:id" element={<VmPage />} />
               <Route path="/order-vm" element={<OrderVM />} />
               <Route path="/billing" element={<Billing />} />
+              <Route path="/billing/settings" element={<BillingSettings />} />
+              <Route path="/logs" element={<LogsPage />} />
+              <Route path="/alerts" element={<AlertsPage />} />
               <Route path="/setting" element={<SettingsPage />} />
               <Route path="/template" element={<TemplatePage />} />
               <Route path="/change_password" element={<ChangePassword />} />
             </Route>
-            {/* </Route> */}
 
             {/* Error pages */}
             <Route path="/403" element={<Error403 />} />
@@ -68,7 +73,18 @@ const App = () => {
           </Routes>
         </AuthProvider>
       </Router>
-      <ToastContainer />
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="light"
+      />
     </>
   );
 };

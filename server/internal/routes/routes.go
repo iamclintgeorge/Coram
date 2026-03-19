@@ -8,7 +8,9 @@ func RegisterRoutes(r *gin.Engine) {
 	api := r.Group("/api") 
 	{
     		UserRoutes(api)
-		// VMRoutes(api)
+		BillingRoutes(api)
+		LoggingRoutes(api)
+		AlertingRoutes(api)
 	}
 
 	proxmox := r.Group("/api/proxmox") 
