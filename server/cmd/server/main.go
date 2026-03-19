@@ -22,6 +22,11 @@ func main() {
 		&models.User{},
 		&models.UserVM{},
 		&models.ProxmoxConfig{},
+		&models.BillingConfig{},
+		&models.BillingRecord{},
+		&models.CoramLog{},
+		&models.AlertRule{},
+		&models.AlertEvent{},
 	)
 	
 	r := gin.Default()
