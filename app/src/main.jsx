@@ -13,6 +13,7 @@ import Login from "./pages/User_Account/login";
 import Signup from "./pages/User_Account/signup";
 import ChangePassword from "./pages/User_Account/changePassword";
 import ForgotPassword from "./pages/User_Account/forgotPassword";
+import SetupWizard from "./pages/Setup/SetupWizard";
 import Error404 from "./pages/Error_Pages/error404";
 import Error403 from "./pages/Error_Pages/error403";
 import AdminLayout from "./layout/adminLayout";
@@ -42,6 +43,7 @@ const App = () => {
         <AuthProvider>
           <Routes>
             {/* Public routes */}
+            <Route path="/setup" element={<SetupWizard />} />
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />

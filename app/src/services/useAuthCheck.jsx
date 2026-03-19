@@ -107,6 +107,20 @@ export const AuthProvider = ({ children }) => {
   useEffect(() => {
     const checkAuth = async () => {
       try {
+        // First check if the app requires first-time setup
+        try {
+          const setupRes = await axios.get(`${import.meta.env.VITE_admin_server}/api/setup/status`);
+          if (setupRes.data.setupRequired) {
+            if (window.location.pathname !== "/setup") {
+              navigate("/setup");
+            }
+            setLoading(false);
+            return;
+          }
+        } catch (setupErr) {
+          console.error("Error checking setup status:", setupErr);
+        }
+
         const response = await axios.get(
           `${import.meta.env.VITE_admin_server}/api/check-auth`,
           {
@@ -114,34 +128,29 @@ export const AuthProvider = ({ children }) => {
           }
         );
 
-        // const response = await axios.get(
-        //   `http://localhost:8080/api/check-auth`,
-        //   {
-        //     withCredentials: true,
-        //   }
-        // );
         if (response.data.authenticated) {
           setIsAuthenticated(true);
           setUser(response.data.user);
-          // console.log("setUser", user);
         } else {
-          // Only navigate if we're not already on the login page
-          if (window.location.pathname !== "/login") {
+          // Only navigate if we're not already on the login or setup page
+          const path = window.location.pathname;
+          if (path !== "/login" && path !== "/setup") {
             navigate("/login");
           }
         }
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error("Error fetching auth data:", error);
         if (error.response) {
           setMessage(
             error.response.data.message || "You are not authenticated."
           );
-          // Only navigate if we're not already on the login page
+          // Only navigate if we're not already on the login or setup page
+          const path = window.location.pathname;
           if (
             error.response.status === 401 &&
-            window.location.pathname !== "/login"
+            path !== "/login" &&
+            path !== "/setup"
           ) {
-            // navigate("/login");
             navigate("/signup");
           }
         } else {

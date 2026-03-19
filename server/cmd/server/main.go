@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/gin-contrib/cors"
@@ -15,8 +16,8 @@ import (
 )
 
 func main() {
-	config.Connect()
 	config.LoadEnv()
+	config.Connect()
 	
 	config.DB.AutoMigrate(
 		&models.User{},
@@ -29,12 +30,14 @@ func main() {
 		&models.AlertEvent{},
 	)
 	
-	r := gin.Default()
-	// r.Static("/", "./dist") //Use only during production environment
+	// Load the stored Proxmox Config from DB on startup
+	config.LoadProxmoxConfig()
 	
+	r := gin.Default()
+
 	// CORS - Must be before routes
 	r.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:5173"},
+		AllowOrigins:     []string{"http://localhost:5173", "http://localhost:8080"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Authorization", "Accept"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -53,8 +56,20 @@ func main() {
 	})
 	r.Use(sessions.Sessions("session", store))
 	
+	// Register API Routes AFTER middleware
 	routes.RegisterRoutes(r)
-	
+
+	// Serve the React application
+	if os.Getenv("mode") == "PROD" {
+		// Serve the compiled assets (JS, CSS, images) without a root wildcard conflict
+		r.StaticFile("/coramlogo_favicon.png", "./dist/coramlogo_favicon.png")
+		r.Static("/assets", "./dist/assets")
+		
+		// Fallback for SPA routing - serve index.html for all unmatched routes
+		r.NoRoute(func(c *gin.Context) {
+			c.File("./dist/index.html")
+		})
+	}
 	log.Println("Server running on http://localhost:8080")
 	r.Run(":8080")
 }

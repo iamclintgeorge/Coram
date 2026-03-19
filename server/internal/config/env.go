@@ -8,6 +8,6 @@ import (
 
 func LoadEnv() {
     if err := godotenv.Load(); err != nil {
-        log.Fatal("Error loading .env file")
+        log.Println("Warning: Error loading .env file, falling back to environment variables or defaults")
     }
 }
