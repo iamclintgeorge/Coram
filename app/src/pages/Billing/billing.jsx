@@ -138,9 +138,9 @@ const Billing = () => {
     return (
       <div className="p-8 max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Billing</h1>
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center mt-6">
-          <FileText className="w-12 h-12 text-amber-400 mx-auto mb-4" />
-          <p className="text-gray-600 text-lg">
+        <div className="p-8 text-center mt-6">
+          <FileText className="w-12 h-12 text-black mx-auto mb-4" />
+          <p className="text-gray-600 text-lg font-inter">
             No active VMs found for billing
           </p>
         </div>
