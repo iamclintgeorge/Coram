@@ -15,7 +15,7 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
 } from "recharts";
 import axios from "axios";
 import usePolling from "../../hooks/usePolling";
@@ -26,7 +26,7 @@ import {
   timeAgo,
 } from "../../utils/formatters";
 
-const POLL_INTERVAL = 5000;
+const POLL_INTERVAL = 1000;
 
 // Circular gauge component
 const ResourceGauge = ({ value, max, label, color, icon: Icon }) => {
@@ -35,15 +35,21 @@ const ResourceGauge = ({ value, max, label, color, icon: Icon }) => {
   const offset = circumference - (percent / 100) * circumference;
 
   return (
-    <div className="flex flex-col items-center p-6 bg-white rounded-2xl border border-gray-200 hover:shadow-lg transition-all duration-300">
+    <div className="flex flex-col items-center p-6 rounded-md border border-gray-500 hover:shadow-lg transition-all duration-300">
       <div className="relative w-28 h-28 mb-4">
         <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
           <circle
-            cx="50" cy="50" r="40"
-            stroke="#f0f0f0" strokeWidth="8" fill="none"
+            cx="50"
+            cy="50"
+            r="40"
+            stroke="#BDBDBD"
+            strokeWidth="8"
+            fill="none"
           />
           <circle
-            cx="50" cy="50" r="40"
+            cx="50"
+            cy="50"
+            r="40"
             stroke={color}
             strokeWidth="8"
             fill="none"
@@ -73,7 +79,10 @@ const CustomTooltip = ({ active, payload, label, unit }) => {
     return (
       <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
         <p className="text-xs text-gray-500 mb-1">{label}</p>
-        <p className="text-sm font-semibold" style={{ color: payload[0].color }}>
+        <p
+          className="text-sm font-semibold"
+          style={{ color: payload[0].color }}
+        >
           {payload[0].value.toFixed(2)} {unit}
         </p>
       </div>
@@ -91,7 +100,7 @@ const VmPage = () => {
   const fetchVMDetails = async () => {
     const response = await axios.get(
       `${import.meta.env.VITE_admin_server}/api/proxmox/vms/${nodeName}/${id}`,
-      { withCredentials: true }
+      { withCredentials: true },
     );
     return response.data;
   };
@@ -106,14 +115,28 @@ const VmPage = () => {
   // Update history charts whenever new VM data arrives
   useEffect(() => {
     if (vm) {
-      setHistory(prev => {
-        const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' });
+      setHistory((prev) => {
+        const time = new Date().toLocaleTimeString([], {
+          hour12: false,
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
         const cpuScore = (vm.cpu || 0) * 100;
         const memoryMB = (vm.mem || 0) / (1024 * 1024);
         const netInKB = (vm.netin || 0) / 1024;
         const netOutKB = (vm.netout || 0) / 1024;
-        
-        const newData = [...prev, { time, cpu: cpuScore, memory: memoryMB, netin: netInKB, netout: netOutKB }];
+
+        const newData = [
+          ...prev,
+          {
+            time,
+            cpu: cpuScore,
+            memory: memoryMB,
+            netin: netInKB,
+            netout: netOutKB,
+          },
+        ];
         if (newData.length > 20) newData.shift();
         return newData;
       });
@@ -126,7 +149,7 @@ const VmPage = () => {
       await axios.post(
         `${import.meta.env.VITE_admin_server}/api/proxmox/vms/${nodeName}/${id}`,
         { action },
-        { withCredentials: true }
+        { withCredentials: true },
       );
       setTimeout(refresh, 1500);
     } catch (err) {
@@ -207,80 +230,174 @@ const VmPage = () => {
         )}
       </div>
 
+      {/* Actions */}
+      <div className=" rounded-xl border border-gray-500 p-6 mb-8">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          VM Controls
+        </h2>
+        <div className="flex flex-wrap gap-3">
+          {actions.map(({ key, label, disabled }) => (
+            <button
+              key={key}
+              className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
+                disabled || actionLoading === key
+                  ? "bg-gray-200 text-gray-600 cursor-not-allowed"
+                  : "bg-gray-900 text-white hover:bg-gray-800 hover:shadow-lg active:scale-95"
+              }`}
+              onClick={() => handleVMAction(key)}
+              disabled={disabled || actionLoading === key}
+            >
+              {actionLoading === key ? (
+                <span className="flex items-center gap-2">
+                  <span className="w-4 h-4 border-2 border-gray-300 border-t-white rounded-full animate-spin" />
+                  {label}ing...
+                </span>
+              ) : (
+                label
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Real-time Graphs Section */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
         {/* CPU Graph */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+        <div className="rounded-xl border border-gray-500 p-5">
           <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <CpuIcon className="w-4 h-4 text-indigo-500" /> CPU Usage (%)
+            <CpuIcon className="w-4 h-4 text-black" /> CPU Usage (%)
           </h3>
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={history}>
                 <defs>
                   <linearGradient id="colorCpu" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#E5E7EB"
+                />
                 <XAxis dataKey="time" hide />
-                <YAxis domain={[0, 100]} tick={{fontSize: 10, fill: '#9CA3AF'}} width={30} axisLine={false} tickLine={false} />
+                <YAxis
+                  domain={[0, 100]}
+                  tick={{ fontSize: 10, fill: "#9CA3AF" }}
+                  width={30}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <Tooltip content={<CustomTooltip unit="%" />} />
-                <Area type="monotone" dataKey="cpu" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorCpu)" isAnimationActive={false} />
+                <Area
+                  type="monotone"
+                  dataKey="cpu"
+                  stroke="#6366f1"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorCpu)"
+                  isAnimationActive={false}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Memory Graph */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+        <div className="rounded-xl border border-gray-500 p-5">
           <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <Activity className="w-4 h-4 text-purple-500" /> Memory (MB)
+            <Activity className="w-4 h-4 text-black" /> Memory (MB)
           </h3>
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={history}>
                 <defs>
                   <linearGradient id="colorMem" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#E5E7EB"
+                />
                 <XAxis dataKey="time" hide />
-                <YAxis domain={['auto', 'auto']} tick={{fontSize: 10, fill: '#9CA3AF'}} width={45} axisLine={false} tickLine={false} />
+                <YAxis
+                  domain={["auto", "auto"]}
+                  tick={{ fontSize: 10, fill: "#9CA3AF" }}
+                  width={45}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <Tooltip content={<CustomTooltip unit="MB" />} />
-                <Area type="monotone" dataKey="memory" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorMem)" isAnimationActive={false} />
+                <Area
+                  type="monotone"
+                  dataKey="memory"
+                  stroke="#8b5cf6"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorMem)"
+                  isAnimationActive={false}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
         {/* Network Graph */}
-        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+        <div className="rounded-xl border border-gray-500 p-5">
           <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
-            <Server className="w-4 h-4 text-teal-500" /> Network I/O (KB/s)
+            <Server className="w-4 h-4 text-black" /> Network I/O (KB/s)
           </h3>
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={history}>
                 <defs>
                   <linearGradient id="colorNetIn" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0} />
                   </linearGradient>
                   <linearGradient id="colorNetOut" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3} />
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <CartesianGrid
+                  strokeDasharray="3 3"
+                  vertical={false}
+                  stroke="#E5E7EB"
+                />
                 <XAxis dataKey="time" hide />
-                <YAxis domain={['auto', 'auto']} tick={{fontSize: 10, fill: '#9CA3AF'}} width={45} axisLine={false} tickLine={false} />
+                <YAxis
+                  domain={["auto", "auto"]}
+                  tick={{ fontSize: 10, fill: "#9CA3AF" }}
+                  width={45}
+                  axisLine={false}
+                  tickLine={false}
+                />
                 <Tooltip />
-                <Area type="monotone" dataKey="netin" name="In (KB/s)" stroke="#14b8a6" strokeWidth={2} fillOpacity={1} fill="url(#colorNetIn)" isAnimationActive={false} />
-                <Area type="monotone" dataKey="netout" name="Out (KB/s)" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorNetOut)" isAnimationActive={false} />
+                <Area
+                  type="monotone"
+                  dataKey="netin"
+                  name="In (KB/s)"
+                  stroke="#14b8a6"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorNetIn)"
+                  isAnimationActive={false}
+                />
+                <Area
+                  type="monotone"
+                  dataKey="netout"
+                  name="Out (KB/s)"
+                  stroke="#f59e0b"
+                  strokeWidth={2}
+                  fillOpacity={1}
+                  fill="url(#colorNetOut)"
+                  isAnimationActive={false}
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -310,9 +427,9 @@ const VmPage = () => {
           color="#14b8a6"
           icon={DiskIcon}
         />
-        <div className="flex flex-col items-center justify-center p-6 bg-white rounded-2xl border border-gray-200 hover:shadow-lg transition-all duration-300">
+        <div className="flex flex-col items-center justify-center p-6 rounded-md border border-gray-500 hover:shadow-lg transition-all duration-300">
           <div className="p-4 rounded-2xl bg-gradient-to-br from-indigo-50 to-purple-50 mb-4">
-            <Server className="w-8 h-8 text-indigo-500" />
+            <Server className="w-8 h-8 text-black" />
           </div>
           <span className="text-2xl font-bold text-gray-900 mb-1">
             {formatUptime(vm.uptime)}
@@ -321,55 +438,27 @@ const VmPage = () => {
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">
-          VM Controls
-        </h2>
-        <div className="flex flex-wrap gap-3">
-          {actions.map(({ key, label, disabled }) => (
-            <button
-              key={key}
-              className={`px-6 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 ${
-                disabled || actionLoading === key
-                  ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                  : "bg-gray-900 text-white hover:bg-gray-800 hover:shadow-lg active:scale-95"
-              }`}
-              onClick={() => handleVMAction(key)}
-              disabled={disabled || actionLoading === key}
-            >
-              {actionLoading === key ? (
-                <span className="flex items-center gap-2">
-                  <span className="w-4 h-4 border-2 border-gray-300 border-t-white rounded-full animate-spin" />
-                  {label}ing...
-                </span>
-              ) : (
-                label
-              )}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* Console */}
-      <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      <div className="rounded-2xl border border-gray-500 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-gray-900">VM Console</h2>
           <a
             href={vncURL}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-sm text-indigo-600 hover:text-indigo-700 font-medium"
+            className="text-sm text-black hover:font-semibold font-medium"
           >
             Open in new tab →
           </a>
         </div>
-        <iframe
-          src={vncURL}
-          title="VM Console"
-          className="w-full h-[500px] border-0"
-          sandbox="allow-same-origin allow-scripts"
-        />
+        <div className="px-5 py-5">
+          <iframe
+            src={vncURL}
+            title="VM Console"
+            className="w-full h-[500px] border-0"
+            sandbox="allow-same-origin allow-scripts"
+          />
+        </div>
       </div>
     </div>
   );

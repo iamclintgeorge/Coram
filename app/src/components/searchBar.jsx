@@ -15,8 +15,18 @@ const SearchBar = () => {
   const pages = [
     { name: "Dashboard", path: "/dashboard", category: "Pages", icon: "📊" },
     { name: "Virtual Machines", path: "/vms", category: "Pages", icon: "🖥️" },
-    { name: "Billing / Invoice", path: "/billing", category: "Pages", icon: "💳" },
-    { name: "Billing Settings", path: "/billing/settings", category: "Pages", icon: "⚙️" },
+    {
+      name: "Billing / Invoice",
+      path: "/billing",
+      category: "Pages",
+      icon: "💳",
+    },
+    {
+      name: "Billing Settings",
+      path: "/billing/settings",
+      category: "Pages",
+      icon: "⚙️",
+    },
     { name: "Order VM", path: "/order-vm", category: "Pages", icon: "🛒" },
     { name: "Logs", path: "/logs", category: "Pages", icon: "📋" },
     { name: "Alerts", path: "/alerts", category: "Pages", icon: "🔔" },
@@ -30,7 +40,7 @@ const SearchBar = () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_admin_server}/api/proxmox/fetchNodeStats/pve`,
-          { withCredentials: true }
+          { withCredentials: true },
         );
         setVmData(response.data || []);
       } catch (err) {
@@ -52,8 +62,7 @@ const SearchBar = () => {
       const vmResults = vmData
         .filter(
           (vm) =>
-            vm.name?.toLowerCase().includes(q) ||
-            String(vm.vmid).includes(q)
+            vm.name?.toLowerCase().includes(q) || String(vm.vmid).includes(q),
         )
         .map((vm) => ({
           name: `${vm.name} (ID: ${vm.vmid})`,
@@ -95,14 +104,14 @@ const SearchBar = () => {
       if (e.key === "ArrowDown") {
         e.preventDefault();
         setSelectedIndex((prev) =>
-          prev < filteredResults.length - 1 ? prev + 1 : 0
+          prev < filteredResults.length - 1 ? prev + 1 : 0,
         );
       }
 
       if (e.key === "ArrowUp") {
         e.preventDefault();
         setSelectedIndex((prev) =>
-          prev > 0 ? prev - 1 : filteredResults.length - 1
+          prev > 0 ? prev - 1 : filteredResults.length - 1,
         );
       }
 
@@ -114,7 +123,7 @@ const SearchBar = () => {
         navigateToResult(filteredResults[0]);
       }
     },
-    [isActive, filteredResults, selectedIndex]
+    [isActive, filteredResults, selectedIndex],
   );
 
   const navigateToResult = (result) => {
@@ -165,11 +174,14 @@ const SearchBar = () => {
           }}
           onBlur={handleBlur}
           onFocus={() => setIsActive(true)}
-          className="w-full h-10 font-inter pl-12 pr-12 text-gray-800 bg-white border border-gray-200 rounded-xl outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+          className="w-full h-10 font-inter pl-12 pr-12 text-gray-800 bg-white border border-gray-200 rounded-md outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
         />
         {query && (
           <button
-            onClick={() => { setQuery(""); inputRef.current?.focus(); }}
+            onClick={() => {
+              setQuery("");
+              inputRef.current?.focus();
+            }}
             className="absolute text-xl right-5 text-gray-400 hover:text-gray-600 transition-colors"
           >
             ×

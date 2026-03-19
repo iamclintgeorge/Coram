@@ -10,30 +10,10 @@ import {
   formatPercentage,
   timeAgo,
 } from "../../utils/formatters";
+import StatCard from "../../components/statCard";
 
 const POLL_INTERVAL = 10000;
 const ALERT_FETCH_INTERVAL = 60000;
-
-// Animated stat card with gradient
-const StatCard = ({ title, value, icon: Icon, gradient, subtitle }) => (
-  <div
-    className={`relative overflow-hidden rounded-2xl p-6 text-white shadow-lg transition-all duration-300 hover:shadow-2xl hover:-translate-y-1 ${gradient}`}
-  >
-    <div className="absolute top-0 right-0 w-32 h-32 -mr-8 -mt-8 rounded-full bg-white/10 blur-2xl" />
-    <div className="relative z-10">
-      <div className="flex items-center justify-between mb-4">
-        <div className="p-2.5 rounded-xl bg-white/20 backdrop-blur-sm">
-          <Icon className="w-6 h-6" />
-        </div>
-      </div>
-      <p className="text-sm font-medium text-white/80 mb-1">{title}</p>
-      <p className="text-3xl font-bold tracking-tight">{value}</p>
-      {subtitle && (
-        <p className="text-xs text-white/60 mt-1">{subtitle}</p>
-      )}
-    </div>
-  </div>
-);
 
 const Dashboard = () => {
   const nodeName = "pve";
@@ -41,15 +21,17 @@ const Dashboard = () => {
   const fetchStats = async () => {
     const response = await axios.get(
       `${import.meta.env.VITE_admin_server}/api/proxmox/fetchNodeStats/${nodeName}`,
-      { withCredentials: true }
+      { withCredentials: true },
     );
     return response.data;
   };
 
-  const { data: stats, loading, lastUpdated, refresh } = usePolling(
-    fetchStats,
-    POLL_INTERVAL
-  );
+  const {
+    data: stats,
+    loading,
+    lastUpdated,
+    refresh,
+  } = usePolling(fetchStats, POLL_INTERVAL);
 
   const runningVMs = stats?.filter((vm) => vm.status === "running").length || 0;
   const totalVMs = stats?.length || 0;
@@ -85,7 +67,7 @@ const Dashboard = () => {
       <div className="p-8 flex flex-col items-center justify-center min-h-[60vh]">
         <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-full blur-3xl" />
-          <Server className="relative w-20 h-20 text-gray-300 mb-6" />
+          <Server className="relative w-20 h-20 text-gray-500 mb-6" />
         </div>
         <h2 className="text-2xl font-inter font-semibold text-gray-800 mb-2">
           No Active VMs
@@ -95,7 +77,7 @@ const Dashboard = () => {
         </p>
         <Link
           to="/order-vm"
-          className="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-xl font-medium hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300"
+          className="px-6 py-2 bg-black text-white rounded-md font-medium hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300"
         >
           Create Your First VM →
         </Link>
@@ -105,7 +87,6 @@ const Dashboard = () => {
 
   return (
     <div className="p-8 max-w-7xl mx-auto">
-      {/* Header with Live Indicator */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-inter font-bold text-gray-900 tracking-tight">
@@ -141,28 +122,24 @@ const Dashboard = () => {
           title="Total VMs"
           value={totalVMs}
           icon={Server}
-          gradient="bg-gradient-to-br from-slate-800 to-slate-900"
           subtitle={`${runningVMs} running`}
         />
         <StatCard
           title="Running VMs"
           value={runningVMs}
           icon={CheckCircle}
-          gradient="bg-gradient-to-br from-emerald-500 to-teal-600"
           subtitle={`${totalVMs - runningVMs} stopped`}
         />
         <StatCard
           title="Total CPU Cores"
           value={totalCPU}
           icon={Cpu}
-          gradient="bg-gradient-to-br from-violet-500 to-purple-600"
           subtitle={`Avg ${formatPercentage(avgCpu)} utilization`}
         />
         <StatCard
           title="Total Memory"
           value={formatBytes(totalMem)}
           icon={Activity}
-          gradient="bg-gradient-to-br from-orange-400 to-rose-500"
           subtitle="Allocated across VMs"
         />
       </div>

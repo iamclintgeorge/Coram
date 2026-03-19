@@ -32,7 +32,7 @@ const BillingSettings = () => {
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_admin_server}/api/billing/config`,
-        { withCredentials: true }
+        { withCredentials: true },
       );
       setConfig(response.data);
     } catch (err) {
@@ -49,7 +49,7 @@ const BillingSettings = () => {
       await axios.put(
         `${import.meta.env.VITE_admin_server}/api/billing/config`,
         config,
-        { withCredentials: true }
+        { withCredentials: true },
       );
       toast.success("Billing configuration saved!");
     } catch (err) {
@@ -100,12 +100,42 @@ const BillingSettings = () => {
   }
 
   const rateFields = [
-    { key: "cpu_rate", label: "CPU Usage Rate", unit: "per % per hour", description: "Cost per 1% CPU usage per hour" },
-    { key: "ram_rate", label: "RAM Usage Rate", unit: "per MB per hour", description: "Cost per MB of memory used per hour" },
-    { key: "ram_alloc_rate", label: "RAM Allocation Rate", unit: "per MB allocated", description: "Cost per MB of memory allocated" },
-    { key: "disk_rate", label: "Disk Usage Rate", unit: "per GB per hour", description: "Cost per GB of disk used per hour" },
-    { key: "disk_alloc_rate", label: "Disk Allocation Rate", unit: "per GB allocated", description: "Cost per GB of disk allocated" },
-    { key: "uptime_rate", label: "Uptime Rate", unit: "per hour", description: "Cost per hour of VM uptime" },
+    {
+      key: "cpu_rate",
+      label: "CPU Usage Rate",
+      unit: "per % per hour",
+      description: "Cost per 1% CPU usage per hour",
+    },
+    {
+      key: "ram_rate",
+      label: "RAM Usage Rate",
+      unit: "per MB per hour",
+      description: "Cost per MB of memory used per hour",
+    },
+    {
+      key: "ram_alloc_rate",
+      label: "RAM Allocation Rate",
+      unit: "per MB allocated",
+      description: "Cost per MB of memory allocated",
+    },
+    {
+      key: "disk_rate",
+      label: "Disk Usage Rate",
+      unit: "per GB per hour",
+      description: "Cost per GB of disk used per hour",
+    },
+    {
+      key: "disk_alloc_rate",
+      label: "Disk Allocation Rate",
+      unit: "per GB allocated",
+      description: "Cost per GB of disk allocated",
+    },
+    {
+      key: "uptime_rate",
+      label: "Uptime Rate",
+      unit: "per hour",
+      description: "Cost per hour of VM uptime",
+    },
   ];
 
   return (
@@ -223,16 +253,18 @@ const BillingSettings = () => {
       </div>
 
       {/* Rate Preview */}
-      <div className="mt-6 bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-6">
-        <h3 className="text-sm font-semibold text-indigo-700 uppercase tracking-wider mb-3">
+      <div className="mt-6 bg-white border border-gray-400 rounded-2xl p-6">
+        <h3 className="text-sm font-semibold text-black uppercase tracking-wider mb-3">
           Rate Preview
         </h3>
         <p className="text-sm text-gray-600">
-          A VM with <span className="font-semibold">2 CPU cores at 50% usage</span>,{" "}
+          A VM with{" "}
+          <span className="font-semibold">2 CPU cores at 50% usage</span>,{" "}
           <span className="font-semibold">2 GB RAM</span>,{" "}
-          <span className="font-semibold">20 GB disk</span>,{" "}
-          running for <span className="font-semibold">24 hours</span> would cost approximately:{" "}
-          <span className="text-2xl font-bold text-indigo-700 ml-2">
+          <span className="font-semibold">20 GB disk</span>, running for{" "}
+          <span className="font-semibold">24 hours</span> would cost
+          approximately:{" "}
+          <span className="text-2xl font-bold text-red-600 ml-2">
             {config.currency}
             {(
               50 * config.cpu_rate +

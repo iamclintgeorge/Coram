@@ -22,7 +22,7 @@ const Billing = () => {
       try {
         const response = await axios.get(
           `${import.meta.env.VITE_admin_server}/api/billing/config`,
-          { withCredentials: true }
+          { withCredentials: true },
         );
         setBillingConfig(response.data);
       } catch (err) {
@@ -44,15 +44,17 @@ const Billing = () => {
   const fetchStats = async () => {
     const response = await axios.get(
       `${import.meta.env.VITE_admin_server}/api/proxmox/fetchNodeStats/${nodeName}`,
-      { withCredentials: true }
+      { withCredentials: true },
     );
     return response.data;
   };
 
-  const { data: stats, loading, lastUpdated, refresh } = usePolling(
-    fetchStats,
-    POLL_INTERVAL
-  );
+  const {
+    data: stats,
+    loading,
+    lastUpdated,
+    refresh,
+  } = usePolling(fetchStats, POLL_INTERVAL);
 
   const calculateCharges = (vm) => {
     if (!billingConfig) return null;
@@ -64,16 +66,46 @@ const Billing = () => {
     const diskAllocCharge = ((vm.maxdisk || 0) / 1024 ** 3) * c.disk_alloc_rate;
     const uptimeCharge = ((vm.uptime || 0) / 3600) * c.uptime_rate;
 
-    const total = cpuCharge + ramCharge + ramAllocCharge + diskCharge + diskAllocCharge + uptimeCharge;
+    const total =
+      cpuCharge +
+      ramCharge +
+      ramAllocCharge +
+      diskCharge +
+      diskAllocCharge +
+      uptimeCharge;
 
     return {
       items: [
-        { label: "CPU Usage", value: formatPercentage(vm.cpu), charge: cpuCharge },
-        { label: "Memory Usage", value: formatBytes(vm.mem), charge: ramCharge },
-        { label: "Memory Allocated", value: formatBytes(vm.maxmem), charge: ramAllocCharge },
-        { label: "Disk Usage", value: formatBytes(vm.disk), charge: diskCharge },
-        { label: "Disk Allocated", value: formatBytes(vm.maxdisk), charge: diskAllocCharge },
-        { label: "Uptime", value: formatUptime(vm.uptime), charge: uptimeCharge },
+        {
+          label: "CPU Usage",
+          value: formatPercentage(vm.cpu),
+          charge: cpuCharge,
+        },
+        {
+          label: "Memory Usage",
+          value: formatBytes(vm.mem),
+          charge: ramCharge,
+        },
+        {
+          label: "Memory Allocated",
+          value: formatBytes(vm.maxmem),
+          charge: ramAllocCharge,
+        },
+        {
+          label: "Disk Usage",
+          value: formatBytes(vm.disk),
+          charge: diskCharge,
+        },
+        {
+          label: "Disk Allocated",
+          value: formatBytes(vm.maxdisk),
+          charge: diskAllocCharge,
+        },
+        {
+          label: "Uptime",
+          value: formatUptime(vm.uptime),
+          charge: uptimeCharge,
+        },
       ],
       total,
     };
@@ -108,7 +140,9 @@ const Billing = () => {
         <h1 className="text-3xl font-bold text-gray-900 mb-2">Billing</h1>
         <div className="bg-amber-50 border border-amber-200 rounded-2xl p-8 text-center mt-6">
           <FileText className="w-12 h-12 text-amber-400 mx-auto mb-4" />
-          <p className="text-gray-600 text-lg">No active VMs found for billing</p>
+          <p className="text-gray-600 text-lg">
+            No active VMs found for billing
+          </p>
         </div>
       </div>
     );
@@ -150,11 +184,15 @@ const Billing = () => {
         <div className="absolute top-0 right-0 w-48 h-48 -mr-12 -mt-12 rounded-full bg-white/5 blur-3xl" />
         <div className="relative z-10 flex items-center justify-between">
           <div>
-            <p className="text-sm font-medium text-white/60 mb-1">Total Across All VMs</p>
+            <p className="text-sm font-medium text-white/60 mb-1">
+              Total Across All VMs
+            </p>
             <p className="text-4xl font-bold tracking-tight">
               {formatCurrency(grandTotal, currency, 2)}
             </p>
-            <p className="text-sm text-white/50 mt-2">{stats.length} virtual machines</p>
+            <p className="text-sm text-white/50 mt-2">
+              {stats.length} virtual machines
+            </p>
           </div>
           <div className="p-4 rounded-2xl bg-white/10 backdrop-blur-sm">
             <TrendingUp className="w-8 h-8 text-white/80" />
@@ -171,17 +209,25 @@ const Billing = () => {
           return (
             <div
               key={vm.vmid}
-              className="bg-white border border-gray-200 rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300"
+              className="border-2 border-gray-400 rounded-xl overflow-hidden hover:shadow-lg transition-all duration-300"
             >
               {/* VM Header */}
               <div className="px-6 py-5 flex items-center justify-between">
                 <div className="flex items-center gap-4">
-                  <div className={`p-3 rounded-xl ${vm.status === "running" ? "bg-emerald-50" : "bg-gray-100"}`}>
-                    <Server className={`w-5 h-5 ${vm.status === "running" ? "text-emerald-600" : "text-gray-400"}`} />
+                  <div
+                    className={`p-3 rounded-xl ${vm.status === "running" ? "bg-emerald-50" : "bg-gray-100"}`}
+                  >
+                    <Server
+                      className={`w-5 h-5 ${vm.status === "running" ? "text-emerald-600" : "text-gray-700"}`}
+                    />
                   </div>
                   <div>
-                    <h2 className="text-lg font-semibold text-gray-900">{vm.name}</h2>
-                    <p className="text-sm text-gray-400 font-mono">VM ID: {vm.vmid}</p>
+                    <h2 className="text-lg font-semibold text-gray-900">
+                      {vm.name}
+                    </h2>
+                    <p className="text-sm text-gray-700 font-mono">
+                      VM ID: {vm.vmid}
+                    </p>
                   </div>
                 </div>
                 <span
@@ -191,33 +237,42 @@ const Billing = () => {
                       : "bg-red-100 text-red-700"
                   }`}
                 >
-                  <span className={`w-1.5 h-1.5 rounded-full ${vm.status === "running" ? "bg-emerald-500" : "bg-red-500"}`} />
+                  <span
+                    className={`w-1.5 h-1.5 rounded-full ${vm.status === "running" ? "bg-emerald-500" : "bg-red-500"}`}
+                  />
                   {vm.status}
                 </span>
               </div>
 
               {/* Charges Breakdown */}
               <div className="px-6 pb-6">
-                <div className="bg-gray-50 rounded-xl overflow-hidden">
+                <div className="bg-white rounded-xl overflow-hidden">
                   <table className="w-full text-sm">
                     <thead>
                       <tr className="border-b border-gray-200">
-                        <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        <th className="text-left px-4 py-3 text-xs font-semibold text-black uppercase tracking-wider">
                           Resource
                         </th>
-                        <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        <th className="text-right px-4 py-3 text-xs font-semibold text-black uppercase tracking-wider">
                           Usage
                         </th>
-                        <th className="text-right px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                        <th className="text-right px-4 py-3 text-xs font-semibold text-black uppercase tracking-wider">
                           Charge
                         </th>
                       </tr>
                     </thead>
                     <tbody>
                       {charges.items.map((item, i) => (
-                        <tr key={i} className="border-b border-gray-100 last:border-0">
-                          <td className="px-4 py-3 text-gray-700">{item.label}</td>
-                          <td className="px-4 py-3 text-right text-gray-500">{item.value}</td>
+                        <tr
+                          key={i}
+                          className="border-b border-gray-100 last:border-0"
+                        >
+                          <td className="px-4 py-3 text-gray-800">
+                            {item.label}
+                          </td>
+                          <td className="px-4 py-3 text-right text-gray-700">
+                            {item.value}
+                          </td>
                           <td className="px-4 py-3 text-right font-semibold text-gray-800">
                             {formatCurrency(item.charge, currency)}
                           </td>
@@ -226,7 +281,10 @@ const Billing = () => {
                     </tbody>
                     <tfoot>
                       <tr className="bg-gray-100">
-                        <td colSpan="2" className="px-4 py-3 font-semibold text-gray-800">
+                        <td
+                          colSpan="2"
+                          className="px-4 py-3 font-semibold text-gray-800"
+                        >
                           Total
                         </td>
                         <td className="px-4 py-3 text-right font-bold text-lg text-gray-900">
@@ -243,23 +301,41 @@ const Billing = () => {
       </div>
 
       {/* Rate Card */}
-      <div className="mt-8 bg-white border border-gray-200 rounded-2xl p-6">
-        <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+      <div className="mt-8 border-2 border-gray-400 rounded-2xl p-6">
+        <h3 className="text-sm font-semibold text-black uppercase tracking-wider mb-4">
           Current Rate Card
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
           {[
             { label: "CPU", rate: billingConfig.cpu_rate, unit: "/% per hr" },
-            { label: "RAM Usage", rate: billingConfig.ram_rate, unit: "/MB per hr" },
-            { label: "RAM Alloc", rate: billingConfig.ram_alloc_rate, unit: "/MB" },
-            { label: "Disk Usage", rate: billingConfig.disk_rate, unit: "/GB per hr" },
-            { label: "Disk Alloc", rate: billingConfig.disk_alloc_rate, unit: "/GB" },
+            {
+              label: "RAM Usage",
+              rate: billingConfig.ram_rate,
+              unit: "/MB per hr",
+            },
+            {
+              label: "RAM Alloc",
+              rate: billingConfig.ram_alloc_rate,
+              unit: "/MB",
+            },
+            {
+              label: "Disk Usage",
+              rate: billingConfig.disk_rate,
+              unit: "/GB per hr",
+            },
+            {
+              label: "Disk Alloc",
+              rate: billingConfig.disk_alloc_rate,
+              unit: "/GB",
+            },
             { label: "Uptime", rate: billingConfig.uptime_rate, unit: "/hr" },
           ].map((r) => (
-            <div key={r.label} className="bg-gray-50 rounded-xl p-3">
+            <div key={r.label} className="bg-white rounded-xl p-3">
               <p className="text-xs text-gray-500 mb-1">{r.label}</p>
               <p className="text-sm font-semibold text-gray-800">
-                {currency}{r.rate}{r.unit}
+                {currency}
+                {r.rate}
+                {r.unit}
               </p>
             </div>
           ))}

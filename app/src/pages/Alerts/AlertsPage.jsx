@@ -2,8 +2,17 @@ import React, { useState, useEffect } from "react";
 import axios from "axios";
 import { toast } from "react-toastify";
 import {
-  Bell, BellOff, Plus, Trash2, Check, AlertTriangle, X,
-  Cpu, HardDrive, Activity, RefreshCw,
+  Bell,
+  BellOff,
+  Plus,
+  Trash2,
+  Check,
+  AlertTriangle,
+  X,
+  Cpu,
+  HardDrive,
+  Activity,
+  RefreshCw,
 } from "lucide-react";
 import { timeAgo } from "../../utils/formatters";
 import usePolling from "../../hooks/usePolling";
@@ -40,7 +49,7 @@ const AlertsPage = () => {
     try {
       const res = await axios.get(
         `${import.meta.env.VITE_admin_server}/api/alerts/rules`,
-        { withCredentials: true }
+        { withCredentials: true },
       );
       setRules(res.data || []);
     } catch (err) {
@@ -52,7 +61,7 @@ const AlertsPage = () => {
   const fetchEvents = async () => {
     const res = await axios.get(
       `${import.meta.env.VITE_admin_server}/api/alerts/events?limit=50`,
-      { withCredentials: true }
+      { withCredentials: true },
     );
     return res.data;
   };
@@ -77,11 +86,18 @@ const AlertsPage = () => {
       await axios.post(
         `${import.meta.env.VITE_admin_server}/api/alerts/rules`,
         newRule,
-        { withCredentials: true }
+        { withCredentials: true },
       );
       toast.success("Alert rule created!");
       setShowCreate(false);
-      setNewRule({ name: "", metric: "cpu", condition: "gt", threshold: 80, vm_filter: "all", enabled: true });
+      setNewRule({
+        name: "",
+        metric: "cpu",
+        condition: "gt",
+        threshold: 80,
+        vm_filter: "all",
+        enabled: true,
+      });
       fetchRules();
     } catch (err) {
       toast.error("Failed to create rule");
@@ -95,7 +111,7 @@ const AlertsPage = () => {
       await axios.put(
         `${import.meta.env.VITE_admin_server}/api/alerts/rules/${id}/toggle`,
         {},
-        { withCredentials: true }
+        { withCredentials: true },
       );
       fetchRules();
     } catch (err) {
@@ -107,7 +123,7 @@ const AlertsPage = () => {
     try {
       await axios.delete(
         `${import.meta.env.VITE_admin_server}/api/alerts/rules/${id}`,
-        { withCredentials: true }
+        { withCredentials: true },
       );
       toast.success("Rule deleted");
       fetchRules();
@@ -121,7 +137,7 @@ const AlertsPage = () => {
       await axios.put(
         `${import.meta.env.VITE_admin_server}/api/alerts/events/${id}/acknowledge`,
         {},
-        { withCredentials: true }
+        { withCredentials: true },
       );
       refreshEvents();
     } catch (err) {
@@ -173,7 +189,11 @@ const AlertsPage = () => {
             onClick={() => setShowCreate(!showCreate)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-900 text-white hover:bg-gray-800 transition-all text-sm font-medium"
           >
-            {showCreate ? <X className="w-4 h-4" /> : <Plus className="w-4 h-4" />}
+            {showCreate ? (
+              <X className="w-4 h-4" />
+            ) : (
+              <Plus className="w-4 h-4" />
+            )}
             {showCreate ? "Cancel" : "New Rule"}
           </button>
         </div>
@@ -183,20 +203,28 @@ const AlertsPage = () => {
           <div className="bg-gray-50 rounded-xl p-5 mb-6 border border-gray-200">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Rule Name</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">
+                  Rule Name
+                </label>
                 <input
                   type="text"
                   value={newRule.name}
-                  onChange={(e) => setNewRule({ ...newRule, name: e.target.value })}
+                  onChange={(e) =>
+                    setNewRule({ ...newRule, name: e.target.value })
+                  }
                   placeholder="e.g. High CPU Alert"
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Metric</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">
+                  Metric
+                </label>
                 <select
                   value={newRule.metric}
-                  onChange={(e) => setNewRule({ ...newRule, metric: e.target.value })}
+                  onChange={(e) =>
+                    setNewRule({ ...newRule, metric: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 >
                   <option value="cpu">CPU Usage (%)</option>
@@ -205,10 +233,14 @@ const AlertsPage = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Condition</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">
+                  Condition
+                </label>
                 <select
                   value={newRule.condition}
-                  onChange={(e) => setNewRule({ ...newRule, condition: e.target.value })}
+                  onChange={(e) =>
+                    setNewRule({ ...newRule, condition: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 >
                   <option value="gt">Greater than (&gt;)</option>
@@ -217,21 +249,32 @@ const AlertsPage = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Threshold (%)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">
+                  Threshold (%)
+                </label>
                 <input
                   type="number"
                   min="0"
                   max="100"
                   value={newRule.threshold}
-                  onChange={(e) => setNewRule({ ...newRule, threshold: parseFloat(e.target.value) || 0 })}
+                  onChange={(e) =>
+                    setNewRule({
+                      ...newRule,
+                      threshold: parseFloat(e.target.value) || 0,
+                    })
+                  }
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Apply To</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">
+                  Apply To
+                </label>
                 <select
                   value={newRule.vm_filter}
-                  onChange={(e) => setNewRule({ ...newRule, vm_filter: e.target.value })}
+                  onChange={(e) =>
+                    setNewRule({ ...newRule, vm_filter: e.target.value })
+                  }
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 >
                   <option value="all">All VMs</option>
@@ -241,7 +284,7 @@ const AlertsPage = () => {
                 <button
                   onClick={handleCreateRule}
                   disabled={saving}
-                  className="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 disabled:opacity-50 text-sm font-medium transition-colors"
+                  className="w-full px-4 py-2 bg-black text-white rounded-lg hover:shadow-xl disabled:opacity-50 text-sm font-medium transition-colors"
                 >
                   {saving ? "Creating..." : "Create Rule"}
                 </button>
@@ -270,13 +313,18 @@ const AlertsPage = () => {
                   }`}
                 >
                   <div className="flex items-center gap-4">
-                    <div className={`p-2.5 rounded-xl ${rule.enabled ? "bg-indigo-50" : "bg-gray-100"}`}>
-                      <Icon className={`w-5 h-5 ${rule.enabled ? "text-indigo-600" : "text-gray-400"}`} />
+                    <div
+                      className={`p-2.5 rounded-xl ${rule.enabled ? "bg-indigo-50" : "bg-gray-100"}`}
+                    >
+                      <Icon
+                        className={`w-5 h-5 ${rule.enabled ? "text-gray-900" : "text-gray-400"}`}
+                      />
                     </div>
                     <div>
                       <p className="font-medium text-gray-900">{rule.name}</p>
                       <p className="text-sm text-gray-500">
-                        {rule.metric.toUpperCase()} {CONDITION_LABELS[rule.condition]} {rule.threshold}%
+                        {rule.metric.toUpperCase()}{" "}
+                        {CONDITION_LABELS[rule.condition]} {rule.threshold}%
                         {rule.vm_filter !== "all" && ` · VM ${rule.vm_filter}`}
                       </p>
                     </div>
@@ -285,11 +333,17 @@ const AlertsPage = () => {
                     <button
                       onClick={() => handleToggleRule(rule.id)}
                       className={`p-2 rounded-lg transition-colors ${
-                        rule.enabled ? "text-emerald-600 hover:bg-emerald-50" : "text-gray-400 hover:bg-gray-100"
+                        rule.enabled
+                          ? "text-emerald-600 hover:bg-emerald-50"
+                          : "text-gray-400 hover:bg-gray-100"
                       }`}
                       title={rule.enabled ? "Disable" : "Enable"}
                     >
-                      {rule.enabled ? <Bell className="w-4 h-4" /> : <BellOff className="w-4 h-4" />}
+                      {rule.enabled ? (
+                        <Bell className="w-4 h-4" />
+                      ) : (
+                        <BellOff className="w-4 h-4" />
+                      )}
                     </button>
                     <button
                       onClick={() => handleDeleteRule(rule.id)}
@@ -326,8 +380,8 @@ const AlertsPage = () => {
                   event.acknowledged
                     ? "border-gray-100 bg-gray-50"
                     : event.severity === "critical"
-                    ? "border-red-200 bg-red-50"
-                    : "border-amber-200 bg-amber-50"
+                      ? "border-red-200 bg-red-50"
+                      : "border-amber-200 bg-amber-50"
                 }`}
               >
                 <div className="flex items-center gap-4">
@@ -336,8 +390,8 @@ const AlertsPage = () => {
                       event.acknowledged
                         ? "bg-gray-100"
                         : event.severity === "critical"
-                        ? "bg-red-100"
-                        : "bg-amber-100"
+                          ? "bg-red-100"
+                          : "bg-amber-100"
                     }`}
                   >
                     <AlertTriangle
@@ -345,16 +399,19 @@ const AlertsPage = () => {
                         event.acknowledged
                           ? "text-gray-400"
                           : event.severity === "critical"
-                          ? "text-red-600"
-                          : "text-amber-600"
+                            ? "text-red-600"
+                            : "text-amber-600"
                       }`}
                     />
                   </div>
                   <div>
-                    <p className="font-medium text-gray-900">{event.rule_name}</p>
+                    <p className="font-medium text-gray-900">
+                      {event.rule_name}
+                    </p>
                     <p className="text-sm text-gray-500">
                       {event.vm_name || `VM ${event.vm_id}`} · {event.metric} at{" "}
-                      {event.metric_value?.toFixed(1)}% (threshold: {event.threshold}%)
+                      {event.metric_value?.toFixed(1)}% (threshold:{" "}
+                      {event.threshold}%)
                     </p>
                     <p className="text-xs text-gray-400 mt-0.5">
                       {new Date(event.created_at).toLocaleString()}
