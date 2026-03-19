@@ -4,7 +4,6 @@ import SpecList from "../../components/specList";
 import { CheckCircle, Cpu, Server, Activity, RefreshCw } from "lucide-react";
 import axios from "axios";
 import usePolling from "../../hooks/usePolling";
-import useAlertEvaluator from "../../hooks/useAlertEvaluator";
 import {
   formatBytes,
   formatUptime,
@@ -51,27 +50,6 @@ const Dashboard = () => {
     fetchStats,
     POLL_INTERVAL
   );
-
-  // Alert evaluation
-  const [alertRules, setAlertRules] = useState([]);
-  useEffect(() => {
-    const fetchRules = async () => {
-      try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_admin_server}/api/alerts/rules`,
-          { withCredentials: true }
-        );
-        setAlertRules(res.data || []);
-      } catch (err) {
-        // Silently fail — alerts are optional
-      }
-    };
-    fetchRules();
-    const interval = setInterval(fetchRules, ALERT_FETCH_INTERVAL);
-    return () => clearInterval(interval);
-  }, []);
-
-  useAlertEvaluator(stats, alertRules, !!stats);
 
   const runningVMs = stats?.filter((vm) => vm.status === "running").length || 0;
   const totalVMs = stats?.length || 0;

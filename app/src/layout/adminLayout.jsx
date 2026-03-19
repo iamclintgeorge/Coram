@@ -29,10 +29,12 @@ import React from "react";
 import SideBar from "../components/sideBar";
 import NavBar from "../components/navBar";
 import { Outlet } from "react-router-dom";
+import GlobalAlertEvaluator from "../hooks/useAlertEvaluator";
 
 const AdminLayout = () => {
   return (
     <>
+      <GlobalAlertEvaluator />
       <NavBar />
       <div className="flex flex-row pr-5">
         <div className="mr-4">

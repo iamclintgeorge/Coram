@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import {
   FiServer as Server,
@@ -8,6 +8,15 @@ import {
   FiHardDrive as DiskIcon,
   FiArrowLeft as ArrowLeft,
 } from "react-icons/fi";
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer
+} from "recharts";
 import axios from "axios";
 import usePolling from "../../hooks/usePolling";
 import {
@@ -58,9 +67,26 @@ const ResourceGauge = ({ value, max, label, color, icon: Icon }) => {
   );
 };
 
+// Graph Tooltips
+const CustomTooltip = ({ active, payload, label, unit }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 border border-gray-200 rounded-lg shadow-lg">
+        <p className="text-xs text-gray-500 mb-1">{label}</p>
+        <p className="text-sm font-semibold" style={{ color: payload[0].color }}>
+          {payload[0].value.toFixed(2)} {unit}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 const VmPage = () => {
   const { id } = useParams();
   const nodeName = "pve";
+  const [history, setHistory] = useState([]);
+  const [actionLoading, setActionLoading] = useState(null);
 
   const fetchVMDetails = async () => {
     const response = await axios.get(
@@ -77,7 +103,22 @@ const VmPage = () => {
     refresh,
   } = usePolling(fetchVMDetails, POLL_INTERVAL);
 
-  const [actionLoading, setActionLoading] = React.useState(null);
+  // Update history charts whenever new VM data arrives
+  useEffect(() => {
+    if (vm) {
+      setHistory(prev => {
+        const time = new Date().toLocaleTimeString([], { hour12: false, hour: '2-digit', minute:'2-digit', second:'2-digit' });
+        const cpuScore = (vm.cpu || 0) * 100;
+        const memoryMB = (vm.mem || 0) / (1024 * 1024);
+        const netInKB = (vm.netin || 0) / 1024;
+        const netOutKB = (vm.netout || 0) / 1024;
+        
+        const newData = [...prev, { time, cpu: cpuScore, memory: memoryMB, netin: netInKB, netout: netOutKB }];
+        if (newData.length > 20) newData.shift();
+        return newData;
+      });
+    }
+  }, [vm]);
 
   const handleVMAction = async (action) => {
     setActionLoading(action);
@@ -121,7 +162,7 @@ const VmPage = () => {
   ];
 
   return (
-    <div className="p-8 max-w-6xl mx-auto">
+    <div className="p-8 max-w-6xl mx-auto font-inter">
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
@@ -164,6 +205,86 @@ const VmPage = () => {
             Live · {timeAgo(lastUpdated)}
           </div>
         )}
+      </div>
+
+      {/* Real-time Graphs Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        {/* CPU Graph */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+            <CpuIcon className="w-4 h-4 text-indigo-500" /> CPU Usage (%)
+          </h3>
+          <div className="h-40">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={history}>
+                <defs>
+                  <linearGradient id="colorCpu" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <XAxis dataKey="time" hide />
+                <YAxis domain={[0, 100]} tick={{fontSize: 10, fill: '#9CA3AF'}} width={30} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip unit="%" />} />
+                <Area type="monotone" dataKey="cpu" stroke="#6366f1" strokeWidth={2} fillOpacity={1} fill="url(#colorCpu)" isAnimationActive={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Memory Graph */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+            <Activity className="w-4 h-4 text-purple-500" /> Memory (MB)
+          </h3>
+          <div className="h-40">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={history}>
+                <defs>
+                  <linearGradient id="colorMem" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <XAxis dataKey="time" hide />
+                <YAxis domain={['auto', 'auto']} tick={{fontSize: 10, fill: '#9CA3AF'}} width={45} axisLine={false} tickLine={false} />
+                <Tooltip content={<CustomTooltip unit="MB" />} />
+                <Area type="monotone" dataKey="memory" stroke="#8b5cf6" strokeWidth={2} fillOpacity={1} fill="url(#colorMem)" isAnimationActive={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Network Graph */}
+        <div className="bg-white rounded-2xl border border-gray-200 p-5">
+          <h3 className="text-sm font-semibold text-gray-700 mb-4 flex items-center gap-2">
+            <Server className="w-4 h-4 text-teal-500" /> Network I/O (KB/s)
+          </h3>
+          <div className="h-40">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={history}>
+                <defs>
+                  <linearGradient id="colorNetIn" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#14b8a6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#14b8a6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorNetOut" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E5E7EB" />
+                <XAxis dataKey="time" hide />
+                <YAxis domain={['auto', 'auto']} tick={{fontSize: 10, fill: '#9CA3AF'}} width={45} axisLine={false} tickLine={false} />
+                <Tooltip />
+                <Area type="monotone" dataKey="netin" name="In (KB/s)" stroke="#14b8a6" strokeWidth={2} fillOpacity={1} fill="url(#colorNetIn)" isAnimationActive={false} />
+                <Area type="monotone" dataKey="netout" name="Out (KB/s)" stroke="#f59e0b" strokeWidth={2} fillOpacity={1} fill="url(#colorNetOut)" isAnimationActive={false} />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
       </div>
 
       {/* Resource Gauges */}
