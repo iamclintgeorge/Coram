@@ -440,24 +440,46 @@ const VmPage = () => {
 
       {/* Console */}
       <div className="rounded-2xl border border-gray-500 overflow-hidden">
-        <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="text-lg font-semibold text-gray-900">VM Console</h2>
-          <a
-            href={vncURL}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-sm text-black hover:font-semibold font-medium"
+        <div className="px-6 py-8 flex flex-col items-center justify-center text-center">
+          <div className="p-4 rounded-2xl bg-gradient-to-br from-slate-100 to-gray-200 mb-5">
+            <MonitorIcon className="w-10 h-10 text-gray-700" />
+          </div>
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">
+            VM Console
+          </h2>
+          <p className="text-sm text-gray-500 mb-6 max-w-md">
+            The integrated console was disabled to improve application
+            stability. To access this VM's console, please log in to your
+            Proxmox server directly.
+          </p>
+          <button
+            onClick={handleLaunchConsole}
+            disabled={!isRunning || vncLoading}
+            className={`flex items-center gap-2.5 px-8 py-3 rounded-xl text-sm font-semibold transition-all duration-200 ${
+              !isRunning
+                ? "bg-gray-200 text-gray-500 cursor-not-allowed"
+                : vncLoading
+                  ? "bg-gray-300 text-gray-600 cursor-wait"
+                  : "bg-gray-900 text-white hover:bg-gray-800 hover:shadow-lg active:scale-95"
+            }`}
           >
-            Open in new tab →
-          </a>
-        </div>
-        <div className="px-5 py-5">
-          <iframe
-            src={vncURL}
-            title="VM Console"
-            className="w-full h-[500px] border-0"
-            sandbox="allow-same-origin allow-scripts"
-          />
+            {vncLoading ? (
+              <>
+                <span className="w-4 h-4 border-2 border-gray-400 border-t-white rounded-full animate-spin" />
+                Connecting...
+              </>
+            ) : (
+              <>
+                <MonitorIcon className="w-4 h-4" />
+                Launch Console
+              </>
+            )}
+          </button>
+          {!isRunning && (
+            <p className="text-xs text-red-500 mt-3">
+              VM must be running to open the console
+            </p>
+          )}
         </div>
       </div>
     </div>

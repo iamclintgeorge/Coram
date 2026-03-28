@@ -13,6 +13,8 @@ import {
   HardDrive,
   Activity,
   RefreshCw,
+  Server,
+  Monitor,
 } from "lucide-react";
 import { timeAgo } from "../../utils/formatters";
 import usePolling from "../../hooks/usePolling";
@@ -31,6 +33,11 @@ const CONDITION_LABELS = {
   eq: "equal to",
 };
 
+const TARGET_ICONS = {
+  vm: Monitor,
+  node: Server,
+};
+
 const AlertsPage = () => {
   const [rules, setRules] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
@@ -39,10 +46,13 @@ const AlertsPage = () => {
     metric: "cpu",
     condition: "gt",
     threshold: 80,
+    target_type: "vm",
     vm_filter: "all",
+    node_filter: "all",
     enabled: true,
   });
   const [saving, setSaving] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("all"); // "all", "vm", "node"
 
   // Fetch rules
   const fetchRules = async () => {
@@ -95,7 +105,9 @@ const AlertsPage = () => {
         metric: "cpu",
         condition: "gt",
         threshold: 80,
+        target_type: "vm",
         vm_filter: "all",
+        node_filter: "all",
         enabled: true,
       });
       fetchRules();
@@ -148,6 +160,12 @@ const AlertsPage = () => {
   const events = eventsData?.events || [];
   const unacknowledgedCount = events.filter((e) => !e.acknowledged).length;
 
+  // Filter rules by target type
+  const filteredRules =
+    activeFilter === "all"
+      ? rules
+      : rules.filter((r) => (r.target_type || "vm") === activeFilter);
+
   return (
     <div className="p-8 max-w-6xl mx-auto font-inter">
       {/* Header */}
@@ -157,7 +175,7 @@ const AlertsPage = () => {
             Alerts
           </h1>
           <p className="text-gray-500 mt-1">
-            Configure rules and monitor triggered alerts
+            Configure rules for VMs and nodes, and monitor triggered alerts
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -184,7 +202,29 @@ const AlertsPage = () => {
       {/* Alert Rules Section */}
       <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-8">
         <div className="flex items-center justify-between mb-6">
-          <h2 className="text-lg font-semibold text-gray-900">Alert Rules</h2>
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg font-semibold text-gray-900">Alert Rules</h2>
+            {/* Target type filter */}
+            <div className="flex gap-1 bg-gray-100 p-0.5 rounded-lg">
+              {[
+                { key: "all", label: "All" },
+                { key: "vm", label: "VM" },
+                { key: "node", label: "Node" },
+              ].map((f) => (
+                <button
+                  key={f.key}
+                  onClick={() => setActiveFilter(f.key)}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${
+                    activeFilter === f.key
+                      ? "bg-white text-gray-900 shadow-sm"
+                      : "text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  {f.label}
+                </button>
+              ))}
+            </div>
+          </div>
           <button
             onClick={() => setShowCreate(!showCreate)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-900 text-white hover:bg-gray-800 transition-all text-sm font-medium"
@@ -216,6 +256,23 @@ const AlertsPage = () => {
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 />
               </div>
+
+              <div>
+                <label className="block text-xs font-medium text-gray-500 mb-1">
+                  Target Type
+                </label>
+                <select
+                  value={newRule.target_type}
+                  onChange={(e) =>
+                    setNewRule({ ...newRule, target_type: e.target.value })
+                  }
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                >
+                  <option value="vm">Virtual Machine</option>
+                  <option value="node">Node</option>
+                </select>
+              </div>
+
               <div>
                 <label className="block text-xs font-medium text-gray-500 mb-1">
                   Metric
@@ -266,43 +323,65 @@ const AlertsPage = () => {
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">
-                  Apply To
-                </label>
-                <select
-                  value={newRule.vm_filter}
-                  onChange={(e) =>
-                    setNewRule({ ...newRule, vm_filter: e.target.value })
-                  }
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
-                >
-                  <option value="all">All VMs</option>
-                </select>
-              </div>
-              <div className="flex items-end">
-                <button
-                  onClick={handleCreateRule}
-                  disabled={saving}
-                  className="w-full px-4 py-2 bg-black text-white rounded-lg hover:shadow-xl disabled:opacity-50 text-sm font-medium transition-colors"
-                >
-                  {saving ? "Creating..." : "Create Rule"}
-                </button>
-              </div>
+
+              {/* Conditional filter field */}
+              {newRule.target_type === "vm" && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                    Apply To VMs
+                  </label>
+                  <select
+                    value={newRule.vm_filter}
+                    onChange={(e) =>
+                      setNewRule({ ...newRule, vm_filter: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    <option value="all">All VMs</option>
+                  </select>
+                </div>
+              )}
+              {newRule.target_type === "node" && (
+                <div>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">
+                    Apply To Nodes
+                  </label>
+                  <select
+                    value={newRule.node_filter}
+                    onChange={(e) =>
+                      setNewRule({ ...newRule, node_filter: e.target.value })
+                    }
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
+                  >
+                    <option value="all">All Nodes</option>
+                  </select>
+                </div>
+              )}
+            </div>
+            <div className="flex justify-end">
+              <button
+                onClick={handleCreateRule}
+                disabled={saving}
+                className="px-6 py-2 bg-black text-white rounded-lg hover:shadow-xl disabled:opacity-50 text-sm font-medium transition-colors"
+              >
+                {saving ? "Creating..." : "Create Rule"}
+              </button>
             </div>
           </div>
         )}
 
         {/* Rules List */}
-        {rules.length === 0 ? (
+        {filteredRules.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
             <Bell className="w-10 h-10 mx-auto mb-3 text-gray-300" />
             <p>No alert rules configured yet</p>
           </div>
         ) : (
           <div className="space-y-3">
-            {rules.map((rule) => {
+            {filteredRules.map((rule) => {
               const Icon = METRIC_ICONS[rule.metric] || Activity;
+              const TargetIcon =
+                TARGET_ICONS[rule.target_type || "vm"] || Monitor;
               return (
                 <div
                   key={rule.id}
@@ -321,11 +400,28 @@ const AlertsPage = () => {
                       />
                     </div>
                     <div>
-                      <p className="font-medium text-gray-900">{rule.name}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-900">{rule.name}</p>
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                            (rule.target_type || "vm") === "node"
+                              ? "bg-blue-50 text-blue-700"
+                              : "bg-purple-50 text-purple-700"
+                          }`}
+                        >
+                          <TargetIcon className="w-3 h-3" />
+                          {(rule.target_type || "vm").toUpperCase()}
+                        </span>
+                      </div>
                       <p className="text-sm text-gray-500">
                         {rule.metric.toUpperCase()}{" "}
                         {CONDITION_LABELS[rule.condition]} {rule.threshold}%
-                        {rule.vm_filter !== "all" && ` · VM ${rule.vm_filter}`}
+                        {rule.target_type === "vm" &&
+                          rule.vm_filter !== "all" &&
+                          ` · VM ${rule.vm_filter}`}
+                        {rule.target_type === "node" &&
+                          rule.node_filter !== "all" &&
+                          ` · Node ${rule.node_filter}`}
                       </p>
                     </div>
                   </div>
@@ -373,67 +469,88 @@ const AlertsPage = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {events.map((event) => (
-              <div
-                key={event.id}
-                className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
-                  event.acknowledged
-                    ? "border-gray-100 bg-gray-50"
-                    : event.severity === "critical"
-                      ? "border-red-200 bg-red-50"
-                      : "border-amber-200 bg-amber-50"
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className={`p-2.5 rounded-xl ${
-                      event.acknowledged
-                        ? "bg-gray-100"
-                        : event.severity === "critical"
-                          ? "bg-red-100"
-                          : "bg-amber-100"
-                    }`}
-                  >
-                    <AlertTriangle
-                      className={`w-5 h-5 ${
+            {events.map((event) => {
+              const isNodeAlert = event.target_type === "node";
+              return (
+                <div
+                  key={event.id}
+                  className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
+                    event.acknowledged
+                      ? "border-gray-100 bg-gray-50"
+                      : event.severity === "critical"
+                        ? "border-red-200 bg-red-50"
+                        : "border-amber-200 bg-amber-50"
+                  }`}
+                >
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`p-2.5 rounded-xl ${
                         event.acknowledged
-                          ? "text-gray-400"
+                          ? "bg-gray-100"
                           : event.severity === "critical"
-                            ? "text-red-600"
-                            : "text-amber-600"
+                            ? "bg-red-100"
+                            : "bg-amber-100"
                       }`}
-                    />
+                    >
+                      <AlertTriangle
+                        className={`w-5 h-5 ${
+                          event.acknowledged
+                            ? "text-gray-400"
+                            : event.severity === "critical"
+                              ? "text-red-600"
+                              : "text-amber-600"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium text-gray-900">
+                          {event.rule_name}
+                        </p>
+                        <span
+                          className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${
+                            isNodeAlert
+                              ? "bg-blue-50 text-blue-700"
+                              : "bg-purple-50 text-purple-700"
+                          }`}
+                        >
+                          {isNodeAlert ? (
+                            <Server className="w-3 h-3" />
+                          ) : (
+                            <Monitor className="w-3 h-3" />
+                          )}
+                          {isNodeAlert ? "NODE" : "VM"}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-500">
+                        {isNodeAlert
+                          ? `Node: ${event.node_name}`
+                          : `${event.vm_name || `VM ${event.vm_id}`} · Node: ${event.node_name}`}{" "}
+                        · {event.metric} at {event.metric_value?.toFixed(1)}%
+                        (threshold: {event.threshold}%)
+                      </p>
+                      <p className="text-xs text-gray-400 mt-0.5">
+                        {new Date(event.created_at).toLocaleString()}
+                      </p>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">
-                      {event.rule_name}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      {event.vm_name || `VM ${event.vm_id}`} · {event.metric} at{" "}
-                      {event.metric_value?.toFixed(1)}% (threshold:{" "}
-                      {event.threshold}%)
-                    </p>
-                    <p className="text-xs text-gray-400 mt-0.5">
-                      {new Date(event.created_at).toLocaleString()}
-                    </p>
-                  </div>
+                  {!event.acknowledged && (
+                    <button
+                      onClick={() => handleAcknowledge(event.id)}
+                      className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      Acknowledge
+                    </button>
+                  )}
+                  {event.acknowledged && (
+                    <span className="text-xs text-gray-400 flex items-center gap-1">
+                      <Check className="w-3.5 h-3.5" /> Acknowledged
+                    </span>
+                  )}
                 </div>
-                {!event.acknowledged && (
-                  <button
-                    onClick={() => handleAcknowledge(event.id)}
-                    className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    <Check className="w-3.5 h-3.5" />
-                    Acknowledge
-                  </button>
-                )}
-                {event.acknowledged && (
-                  <span className="text-xs text-gray-400 flex items-center gap-1">
-                    <Check className="w-3.5 h-3.5" /> Acknowledged
-                  </span>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
