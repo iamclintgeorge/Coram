@@ -8,4 +8,4 @@ build:
 	rm -rf dist && mkdir dist
 	mv app/dist dist/dist
 	# Build Go binary
-	cd server && go build -o ../dist/app main.go
+	cd server && go build -o ../dist/app /cmd/server/main.go

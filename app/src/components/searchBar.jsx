@@ -13,25 +13,23 @@ const SearchBar = () => {
 
   // Actual app pages
   const pages = [
-    { name: "Dashboard", path: "/dashboard", category: "Pages", icon: "📊" },
-    { name: "Virtual Machines", path: "/vms", category: "Pages", icon: "🖥️" },
+    { name: "Dashboard", path: "/dashboard", category: "Pages" },
+    { name: "Virtual Machines", path: "/vms", category: "Pages" },
     {
       name: "Billing / Invoice",
       path: "/billing",
       category: "Pages",
-      icon: "💳",
     },
     {
       name: "Billing Settings",
       path: "/billing/settings",
       category: "Pages",
-      icon: "⚙️",
     },
-    { name: "Order VM", path: "/order-vm", category: "Pages", icon: "🛒" },
-    { name: "Logs", path: "/logs", category: "Pages", icon: "📋" },
-    { name: "Alerts", path: "/alerts", category: "Pages", icon: "🔔" },
-    { name: "Settings", path: "/setting", category: "Pages", icon: "⚙️" },
-    { name: "Profile", path: "/profile", category: "Pages", icon: "👤" },
+    { name: "Order VM", path: "/order-vm", category: "Pages" },
+    { name: "Logs", path: "/logs", category: "Pages" },
+    { name: "Alerts", path: "/alerts", category: "Pages" },
+    { name: "Settings", path: "/setting", category: "Pages" },
+    { name: "Profile", path: "/profile", category: "Pages" },
   ];
 
   // Fetch VMs for search
@@ -174,7 +172,7 @@ const SearchBar = () => {
           }}
           onBlur={handleBlur}
           onFocus={() => setIsActive(true)}
-          className="w-full h-10 font-inter pl-12 pr-12 text-gray-800 bg-white border border-gray-200 rounded-md outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
+          className="w-full h-10 font-inter pl-12 pr-12 text-gray-800 bg-white border border-gray-200 rounded-md outline-none transition-all duration-200 placeholder:text-gray-400 focus:border-gray-400 focus:ring-2 focus:ring-indigo-100"
         />
         {query && (
           <button
@@ -216,7 +214,7 @@ const SearchBar = () => {
                         : "hover:bg-gray-50 text-gray-700"
                     }`}
                   >
-                    <span className="text-base">{result.icon}</span>
+                    {/* <span className="text-base">{result.icon}</span> */}
                     <span className="font-medium text-sm">{result.name}</span>
                     {result.status && (
                       <span className="ml-auto text-xs text-gray-400">

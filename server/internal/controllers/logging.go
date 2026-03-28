@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strconv"
 	"time"
 
@@ -82,9 +81,14 @@ func GetLogs(c *gin.Context) {
 // GetProxmoxSyslog proxies the Proxmox syslog API
 func GetProxmoxSyslog(c *gin.Context) {
 	nodeName := c.Param("node")
-	apiToken := os.Getenv("apiToken")
-	host := os.Getenv("proxmoxHost")
-	port := os.Getenv("proxmoxPort")
+	pConfig := config.GetProxmoxConfig()
+	if pConfig == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Proxmox configuration is missing"})
+		return
+	}
+	apiToken := pConfig.APIToken
+	host := pConfig.Host
+	port := pConfig.Port
 
 	limit := c.DefaultQuery("limit", "50")
 	start := c.DefaultQuery("start", "0")

@@ -7,6 +7,7 @@ import (
 func RegisterRoutes(r *gin.Engine) {
 	api := r.Group("/api") 
 	{
+		SetupRoutes(api)
     		UserRoutes(api)
 		BillingRoutes(api)
 		LoggingRoutes(api)

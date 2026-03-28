@@ -65,11 +65,11 @@ const Dashboard = () => {
   if (!stats || stats.length === 0) {
     return (
       <div className="p-8 flex flex-col items-center justify-center min-h-[60vh]">
-        <div className="relative">
+        {/* <div className="relative">
           <div className="absolute inset-0 bg-gradient-to-r from-purple-500/20 to-blue-500/20 rounded-full blur-3xl" />
           <Server className="relative w-20 h-20 text-gray-500 mb-6" />
-        </div>
-        <h2 className="text-2xl font-inter font-semibold text-gray-800 mb-2">
+        </div> */}
+        <h2 className="text-4xl font-inter font-semibold text-gray-900 mb-1">
           No Active VMs
         </h2>
         <p className="text-gray-500 font-inter mb-6">
@@ -77,7 +77,7 @@ const Dashboard = () => {
         </p>
         <Link
           to="/order-vm"
-          className="px-6 py-2 bg-black text-white rounded-md font-medium hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300"
+          className="px-6 py-2 bg-black text-white rounded-md font-normal hover:shadow-lg hover:shadow-indigo-500/30 transition-all duration-300 font-inter"
         >
           Create Your First VM →
         </Link>

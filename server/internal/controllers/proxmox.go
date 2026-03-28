@@ -5,20 +5,24 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	// "github.com/iamclintgeorge/Coram/internal/config"
+	"github.com/iamclintgeorge/Coram/internal/config"
 	// "github.com/iamclintgeorge/Coram/internal/models"
 	proxmox "github.com/iamclintgeorge/Coram/pkg/proxmox/v9.0.3"
 )
 
 //This fetches Information of all the VMs in a node
 func FetchNodeStats(c *gin.Context) {
-    apiToken := os.Getenv("apiToken")
-    host := os.Getenv("proxmoxHost")
-    port := os.Getenv("proxmoxPort")
+	pConfig := config.GetProxmoxConfig()
+	if pConfig == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Proxmox configuration is missing"})
+		return
+	}
+	apiToken := pConfig.APIToken
+	host := pConfig.Host
+	port := pConfig.Port
     nodeName := c.Param("node")
 
     client := proxmox.NewClient(
@@ -39,9 +43,14 @@ func FetchNodeStats(c *gin.Context) {
 }
 
 func FetchVMStats(c *gin.Context) {
-    apiToken := os.Getenv("apiToken")
-    host := os.Getenv("proxmoxHost")
-    port := os.Getenv("proxmoxPort")
+	pConfig := config.GetProxmoxConfig()
+	if pConfig == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Proxmox configuration is missing"})
+		return
+	}
+	apiToken := pConfig.APIToken
+	host := pConfig.Host
+	port := pConfig.Port
     nodeName := c.Param("node")
 	vmIDStr := c.Param("id")
 
@@ -72,9 +81,14 @@ if err != nil {
 }
 
 func ControlVM(c *gin.Context) {
-	apiToken := os.Getenv("apiToken")
-    host := os.Getenv("proxmoxHost")
-    port := os.Getenv("proxmoxPort")
+	pConfig := config.GetProxmoxConfig()
+	if pConfig == nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Proxmox configuration is missing"})
+		return
+	}
+	apiToken := pConfig.APIToken
+	host := pConfig.Host
+	port := pConfig.Port
     nodeName := c.Param("node")
 	vmIDStr := c.Param("id")
     var payload map[string]interface{}

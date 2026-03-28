@@ -13,6 +13,7 @@ import Login from "./pages/User_Account/login";
 import Signup from "./pages/User_Account/signup";
 import ChangePassword from "./pages/User_Account/changePassword";
 import ForgotPassword from "./pages/User_Account/forgotPassword";
+import SetupWizard from "./pages/Setup/SetupWizard";
 import Error404 from "./pages/Error_Pages/error404";
 import Error403 from "./pages/Error_Pages/error403";
 import AdminLayout from "./layout/adminLayout";
@@ -34,6 +35,7 @@ import OrderVM from "./pages/OrderVM/orderVM";
 // Logs & Alerts
 import LogsPage from "./pages/Logs/LogsPage";
 import AlertsPage from "./pages/Alerts/AlertsPage";
+import ManageUsers from "./pages/User_Account/manageUsers";
 
 const App = () => {
   return (
@@ -42,15 +44,17 @@ const App = () => {
         <AuthProvider>
           <Routes>
             {/* Public routes */}
+            <Route path="/setup" element={<SetupWizard />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
 
             {/* Protected routes */}
             <Route path="/" element={<AdminLayout />}>
               <Route index element={<Navigate to="/dashboard" />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/signup" element={<Signup />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/manage-users" element={<ManageUsers />} />
               <Route path="/vms" element={<VMList />} />
               <Route path="/vms/:id" element={<VmPage />} />
               <Route path="/order-vm" element={<OrderVM />} />
