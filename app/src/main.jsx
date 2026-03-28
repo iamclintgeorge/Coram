@@ -35,6 +35,7 @@ import OrderVM from "./pages/OrderVM/orderVM";
 // Logs & Alerts
 import LogsPage from "./pages/Logs/LogsPage";
 import AlertsPage from "./pages/Alerts/AlertsPage";
+import ManageUsers from "./pages/User_Account/manageUsers";
 
 const App = () => {
   return (
@@ -45,14 +46,15 @@ const App = () => {
             {/* Public routes */}
             <Route path="/setup" element={<SetupWizard />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/signup" element={<Signup />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
 
             {/* Protected routes */}
             <Route path="/" element={<AdminLayout />}>
               <Route index element={<Navigate to="/dashboard" />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/signup" element={<Signup />} />
               <Route path="/profile" element={<ProfilePage />} />
+              <Route path="/manage-users" element={<ManageUsers />} />
               <Route path="/vms" element={<VMList />} />
               <Route path="/vms/:id" element={<VmPage />} />
               <Route path="/order-vm" element={<OrderVM />} />

@@ -17,7 +17,13 @@ const menuItems = [
   },
   { path: "/logs", label: "Logs", roles: ["root"], icon: Server },
   { path: "/alerts", label: "Alerts", icon: Server },
-  { path: "/signup", label: "Manage User", roles: ["root"], icon: Server },
+  { path: "/signup", label: "Create Users", roles: ["root"], icon: Server },
+  {
+    path: "/manage-users",
+    label: "Manage Users",
+    roles: ["root"],
+    icon: Server,
+  },
   { path: "/setting", label: "Setting", icon: Server },
 ];
 

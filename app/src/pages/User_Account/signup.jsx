@@ -10,16 +10,6 @@ function DynamicSignup() {
   const [loading, setLoading] = useState(false);
   const [checkroot, setCheckroot] = useState(false);
 
-  useEffect(() => {
-    checkRoot();
-  }, []);
-
-  useEffect(() => {
-    if (checkroot) {
-      navigate("/login");
-    }
-  }, [checkroot, navigate]);
-
   const checkRoot = async () => {
     try {
       const response = await axios.get(
@@ -27,11 +17,22 @@ function DynamicSignup() {
         { withCredentials: true },
       );
       setCheckroot(response.data.isRoot);
-      // console.log(response.data.isRoot);
+      console.log("isRoot", response.data.isRoot);
+      if (!response.data.isRoot) {
+        navigate("/login");
+      }
     } catch (err) {
       console.log("Error while fetching Root Status:", err.message);
     }
   };
+
+  useEffect(() => {
+    checkRoot();
+  }, []);
+
+  if (!checkroot) {
+    navigate("/login");
+  }
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -73,19 +74,19 @@ function DynamicSignup() {
   };
 
   return (
-    <div className="h-screen bg-[#f4f4f4] relative overflow-hidden">
+    <div className="h-full bg-[#f4f4f4] relative overflow-hidden">
       {/* Branding - smaller */}
-      <div className="absolute top-6 left-6 z-10">
+      {/* <div className="absolute top-6 left-6 z-10">
         <div className="text-[#0C2340] font-playfair text-2xl">
           <p>coram</p>
         </div>
-      </div>
+      </div> */}
 
       {/* Main content container */}
       <div className="flex flex-col h-full">
         {/* Form container */}
-        <div className="flex-1 flex items-center justify-center p-3">
-          <div className="relative z-10 w-full max-w-sm">
+        <div className="flex-1 flex mt-5 justify-center p-3">
+          <div className="relative w-full max-w-sm">
             <div className="bg-white rounded-xl border-[1px] border-gray-500 overflow-hidden">
               {/* Header */}
               <div className="bg-white px-6 py-6 text-center relative overflow-hidden">
@@ -211,9 +212,9 @@ function DynamicSignup() {
         </div>
 
         {/* Footer */}
-        <div className="flex-shrink-0 py-3 text-center text-black/60 text-xs">
+        {/* <div className="flex-shrink-0 py-3 text-center text-black/60 text-xs">
           <p>© 2025 Coram. All rights reserved.</p>
-        </div>
+        </div> */}
       </div>
     </div>
   );
