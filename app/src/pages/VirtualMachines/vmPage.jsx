@@ -7,6 +7,7 @@ import {
   FiCpu as CpuIcon,
   FiHardDrive as DiskIcon,
   FiArrowLeft as ArrowLeft,
+  FiMonitor as MonitorIcon,
 } from "react-icons/fi";
 import {
   AreaChart,
@@ -96,6 +97,7 @@ const VmPage = () => {
   const nodeName = "pve";
   const [history, setHistory] = useState([]);
   const [actionLoading, setActionLoading] = useState(null);
+  const [vncLoading, setVncLoading] = useState(false);
 
   const fetchVMDetails = async () => {
     const response = await axios.get(
@@ -159,6 +161,10 @@ const VmPage = () => {
     }
   };
 
+  const handleLaunchConsole = () => {
+    console.log("handleLaunchConsole clicked");
+  };
+
   if (loading || !vm) {
     return (
       <div className="p-8">
@@ -202,7 +208,7 @@ const VmPage = () => {
                 ID: {vm.vmid}
               </span>
               <span
-                className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-semibold ${
+                className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-medium ${
                   isRunning
                     ? "bg-emerald-100 text-emerald-700"
                     : "bg-red-100 text-red-700"
@@ -214,6 +220,12 @@ const VmPage = () => {
                   }`}
                 />
                 {vm.status}
+              </span>
+              <span
+                className={`inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-xs font-medium 
+                  bg-yellow-600/10 text-yellow-700`}
+              >
+                assigned to: {"guest"}
               </span>
             </div>
           </div>
@@ -239,7 +251,7 @@ const VmPage = () => {
           {actions.map(({ key, label, disabled }) => (
             <button
               key={key}
-              className={`px-6 py-2.5 rounded-md text-sm font-medium transition-all duration-200 ${
+              className={`px-6 py-2 rounded-md text-sm font-medium transition-all duration-200 ${
                 disabled || actionLoading === key
                   ? "bg-gray-200 text-gray-600 cursor-not-allowed"
                   : "bg-gray-900 text-white hover:bg-gray-800 hover:shadow-lg active:scale-95"
