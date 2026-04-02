@@ -19,6 +19,21 @@ const BILLING_PERIODS = [
   { value: "monthly", label: "Monthly" },
 ];
 
+const handleCreateNew = () => {
+  setConfig({
+    currency: "₹",
+    currency_code: "INR",
+    cpu_rate: 0,
+    ram_rate: 0,
+    ram_alloc_rate: 0,
+    disk_rate: 0,
+    disk_alloc_rate: 0,
+    uptime_rate: 0,
+    billing_period: "hourly",
+  });
+  toast.info("New rate card initialized — configure and save");
+};
+
 const BillingSettings = () => {
   const [config, setConfig] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -143,7 +158,7 @@ const BillingSettings = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">
             Billing Settings
           </h1>
           <p className="text-gray-500 mt-1">
@@ -152,12 +167,21 @@ const BillingSettings = () => {
         </div>
         <div className="flex items-center gap-3">
           <button
+            onClick={handleCreateNew}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            <span className="text-lg leading-none">＋</span>
+            New Rate Card
+          </button>
+
+          <button
             onClick={handleReset}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
           >
             <RotateCcw className="w-4 h-4" />
             Reset Defaults
           </button>
+
           <button
             onClick={handleSave}
             disabled={saving}

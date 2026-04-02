@@ -14,15 +14,17 @@ const VMList = () => {
   const fetchVMStats = async () => {
     const response = await axios.get(
       `${import.meta.env.VITE_admin_server}/api/proxmox/fetchNodeStats/${nodeName}`,
-      { withCredentials: true }
+      { withCredentials: true },
     );
     return response.data;
   };
 
-  const { data: stats, loading, lastUpdated, refresh } = usePolling(
-    fetchVMStats,
-    POLL_INTERVAL
-  );
+  const {
+    data: stats,
+    loading,
+    lastUpdated,
+    refresh,
+  } = usePolling(fetchVMStats, POLL_INTERVAL);
 
   if (loading) {
     return (
@@ -44,7 +46,7 @@ const VMList = () => {
       {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+          <h1 className="text-3xl font-semibold text-gray-900 tracking-tight font-inter">
             Virtual Machines
           </h1>
           <p className="text-gray-500 mt-1">
