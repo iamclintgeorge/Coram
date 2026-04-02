@@ -52,8 +52,13 @@ const ViewUsersPage = () => {
   );
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-4">View Users</h1>
+    <div className="p-6 font-inter">
+      <div className="mb-10">
+        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+          View Users
+        </h1>
+        <p className="text-gray-500 mt-1">Manager users using your service</p>
+      </div>
 
       {/* Search box */}
       <input
