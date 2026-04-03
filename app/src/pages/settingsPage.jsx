@@ -74,7 +74,7 @@ const SettingsPage = () => {
   return (
     <div className="p-8 text-neutral-100 max-w-4xl font-inter">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+        <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">
           Settings
         </h1>
         <p className="text-gray-500 mt-1">
@@ -115,7 +115,7 @@ const SettingsPage = () => {
                   Appearance (Theme)
                 </label>
                 <select
-                  className="w-full md:w-64 rounded-md border border-gray-200 shadow-sm p-3 text-gray-800 bg-white"
+                  className="w-full md:w-64 rounded-md border border-gray-200 font-inter text-sm shadow-sm px-2 py-1 text-gray-800 bg-white"
                   value={theme}
                   onChange={(e) => setTheme(e.target.value)}
                 >
@@ -123,6 +123,37 @@ const SettingsPage = () => {
                   <option value="dark">Dark Mode</option>
                   <option value="system">System Preference</option>
                 </select>
+              </div>
+              <div>
+                <div className="space-y-3">
+                  <label className="block text-sm font-medium text-neutral-400 mb-2">
+                    VM Display Preference
+                  </label>
+                  <div className="flex flex-col gap-3">
+                    <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-800">
+                      <input
+                        type="radio"
+                        name="vmDisplay"
+                        value="light"
+                        checked={theme === "light"}
+                        onChange={(e) => setTheme(e.target.value)}
+                        className="w-4 h-4 accent-gray-900"
+                      />
+                      Show VMs in all Nodes
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer text-sm text-gray-800">
+                      <input
+                        type="radio"
+                        name="vmDisplay"
+                        value="dark"
+                        checked={theme === "dark"}
+                        onChange={(e) => setTheme(e.target.value)}
+                        className="w-4 h-4 accent-gray-900"
+                      />
+                      Show VMs of only the selected Node
+                    </label>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
