@@ -1,6 +1,7 @@
 import react, { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
+import { UserPlus, Mail, Lock, User } from "lucide-react";
 
 function DynamicSignup() {
   const navigate = useNavigate();
@@ -74,150 +75,231 @@ function DynamicSignup() {
   };
 
   return (
-    <div className="h-full bg-[#f4f4f4] relative overflow-hidden">
-      {/* Branding - smaller */}
-      {/* <div className="absolute top-6 left-6 z-10">
-        <div className="text-[#0C2340] font-playfair text-2xl">
-          <p>coram</p>
-        </div>
-      </div> */}
+    <div className="p-8 max-w-6xl mx-auto font-inter">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">
+          Create New User
+        </h1>
+        <p className="text-gray-500 mt-1">
+          Register a new account for your user
+        </p>
+      </div>
 
-      {/* Main content container */}
-      <div className="flex flex-col h-full">
-        {/* Form container */}
-        <div className="flex-1 flex mt-5 justify-center p-3">
-          <div className="relative w-full max-w-sm">
-            <div className="bg-white rounded-xl border-[1px] border-gray-500 overflow-hidden">
-              {/* Header */}
-              <div className="bg-white px-6 py-6 text-center relative overflow-hidden">
-                <h2 className="text-lg font-inter font-semibold text-[#0C2340] mt-4">
-                  Create New User
-                </h2>
-              </div>
+      {/* Form Card */}
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 max-w-lg">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="grid grid-cols-1 gap-6">
+            {/* Username */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                <User size={16} className="text-gray-400" /> Username
+              </label>
+              <input
+                type="text"
+                value={userName}
+                onChange={(e) => setName(e.target.value)}
+                required
+                placeholder="johndoe"
+                className="w-full rounded-lg border border-gray-200 p-2.5 text-gray-800 focus:ring-2 focus:ring-gray-900 outline-none transition-all"
+              />
+            </div>
 
-              {/* Form */}
-              <div className="px-6 py-5">
-                <form onSubmit={handleSubmit} className="space-y-4">
-                  {/* Username field */}
-                  <div className="space-y-1">
-                    <label
-                      htmlFor="username"
-                      className="block text-xs font-semibold text-[#0C2340]"
-                    >
-                      Username
-                    </label>
-                    <input
-                      type="text"
-                      id="username"
-                      name="username"
-                      value={userName}
-                      onChange={(e) => setName(e.target.value)}
-                      required
-                      disabled={loading}
-                      className="w-full pl-3 pr-3 py-3 text-sm border-2 border-gray-200 rounded-lg focus:border-[#af0f0f] focus:ring-0 transition-all duration-300 disabled:bg-gray-50 disabled:opacity-70 text-[#0C2340] placeholder-gray-400"
-                      placeholder="Enter username"
-                    />
-                  </div>
+            {/* Email */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                <Mail size={16} className="text-gray-400" /> Email Address
+              </label>
+              <input
+                type="email"
+                value={emailId}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                placeholder="john@example.com"
+                className="w-full rounded-lg border border-gray-200 p-2.5 text-gray-800 focus:ring-2 focus:ring-gray-900 outline-none transition-all"
+              />
+            </div>
 
-                  {/* Password field */}
-                  <div className="space-y-1">
-                    <label
-                      htmlFor="password"
-                      className="block text-xs font-semibold text-[#0C2340]"
-                    >
-                      Password
-                    </label>
-                    <input
-                      type="password"
-                      id="password"
-                      name="password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      disabled={loading}
-                      className="w-full pl-3 pr-3 py-3 text-sm border-2 border-gray-200 rounded-lg focus:border-[#af0f0f] focus:ring-0 transition-all duration-300 disabled:bg-gray-50 disabled:opacity-70 text-[#0C2340] placeholder-gray-400"
-                      placeholder="Enter password"
-                    />
-                  </div>
-
-                  {/* Email field */}
-                  <div className="space-y-1">
-                    <label
-                      htmlFor="email"
-                      className="block text-xs font-semibold text-[#0C2340]"
-                    >
-                      Email Address
-                    </label>
-                    <input
-                      type="email"
-                      id="email"
-                      name="email"
-                      value={emailId}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                      disabled={loading}
-                      className="w-full pl-3 pr-3 py-3 text-sm border-2 border-gray-200 rounded-lg focus:border-[#af0f0f] focus:ring-0 transition-all duration-300 disabled:bg-gray-50 disabled:opacity-70 text-[#0C2340] placeholder-gray-400"
-                      placeholder="Enter email address"
-                    />
-                  </div>
-
-                  {/* Submit button */}
-                  <div className="pt-2">
-                    <button
-                      type="submit"
-                      disabled={!validateForm() || loading}
-                      className="w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-white bg-gradient-to-r from-[#ae4242] to-[#c45252] hover:from-[#c45252] hover:to-[#ae4242] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ae4242] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
-                    >
-                      {loading ? (
-                        <div className="flex items-center">
-                          <svg
-                            className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                          >
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                          </svg>
-                          Creating User...
-                        </div>
-                      ) : (
-                        "Create User"
-                      )}
-                    </button>
-                  </div>
-                </form>
-
-                {/* Footer link */}
-                <p className="text-sm text-center mt-2 font-inter text-gray-600">
-                  Already have an account?{" "}
-                  <a className="hover:text-[#0C2340]" href="/login">
-                    Login here
-                  </a>
-                </p>
-              </div>
+            {/* Password */}
+            <div>
+              <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+                <Lock size={16} className="text-gray-400" /> Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                placeholder="••••••••"
+                className="w-full rounded-lg border border-gray-200 p-2.5 text-gray-800 focus:ring-2 focus:ring-gray-900 outline-none transition-all"
+              />
             </div>
           </div>
-        </div>
 
-        {/* Footer */}
-        {/* <div className="flex-shrink-0 py-3 text-center text-black/60 text-xs">
-          <p>© 2025 Coram. All rights reserved.</p>
-        </div> */}
+          <div className="pt-4 border-t border-gray-100 flex flex-col gap-4">
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full bg-gray-900 text-white text-sm px-6 py-2 rounded-md hover:bg-black transition-all flex items-center justify-center gap-2 font-medium disabled:opacity-50"
+            >
+              <UserPlus size={18} />
+              {loading ? "Creating User..." : "Create User Account"}
+            </button>
+
+            {/* <p className="text-center text-sm text-gray-500">
+              User will be assigned a default role. Manage roles in{" "}
+              <button
+                onClick={() => navigate("/view-users")}
+                className="text-gray-900 font-semibold hover:underline"
+              >
+                Manage Users
+              </button>
+            </p> */}
+          </div>
+        </form>
       </div>
     </div>
   );
 }
 
 export default DynamicSignup;
+
+// import React, { useEffect, useState } from "react";
+// import axios from "axios";
+// import { useNavigate } from "react-router-dom";
+// import { UserPlus, Mail, Lock, User } from "lucide-react";
+// import { toast } from "react-toastify";
+
+// function DynamicSignup() {
+//   const navigate = useNavigate();
+//   const [userName, setName] = useState("");
+//   const [password, setPassword] = useState("");
+//   const [emailId, setEmail] = useState("");
+//   const [loading, setLoading] = useState(false);
+//   const [checkroot, setCheckroot] = useState(false);
+
+//   useEffect(() => {
+//     const checkRoot = async () => {
+//       try {
+//         const response = await axios.get(
+//           `${import.meta.env.VITE_admin_server}/api/check-root`,
+//           { withCredentials: true },
+//         );
+//         setCheckroot(response.data.isRoot);
+//         if (!response.data.isRoot) navigate("/login");
+//       } catch (err) {
+//         navigate("/login");
+//       }
+//     };
+//     checkRoot();
+//   }, [navigate]);
+
+//   const handleSubmit = async (event) => {
+//     event.preventDefault();
+//     setLoading(true);
+//     try {
+//       await axios.post(
+//         `${import.meta.env.VITE_admin_server}/api/signup`,
+//         { emailId, userName, password },
+//         { withCredentials: true },
+//       );
+//       toast.success("User created successfully");
+//       navigate("/dashboard");
+//     } catch (err) {
+//       toast.error("Failed to create user");
+//     } finally {
+//       setLoading(false);
+//     }
+//   };
+
+//   if (!checkroot) return null;
+
+//   return (
+//     <div className="p-8 mx-auto font-inter max-w-2xl">
+//       {/* Header */}
+//       <div className="mb-8">
+//         <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">
+//           Create New User
+//         </h1>
+//         <p className="text-gray-500 mt-1">
+//           Register a new account for your service
+//         </p>
+//       </div>
+
+//       {/* Form Card */}
+//       <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8">
+//         <form onSubmit={handleSubmit} className="space-y-6">
+//           <div className="grid grid-cols-1 gap-6">
+//             {/* Username */}
+//             <div>
+//               <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+//                 <User size={16} className="text-gray-400" /> Username
+//               </label>
+//               <input
+//                 type="text"
+//                 value={userName}
+//                 onChange={(e) => setName(e.target.value)}
+//                 required
+//                 placeholder="johndoe"
+//                 className="w-full rounded-lg border border-gray-200 p-2.5 text-gray-800 focus:ring-2 focus:ring-gray-900 outline-none transition-all"
+//               />
+//             </div>
+
+//             {/* Email */}
+//             <div>
+//               <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+//                 <Mail size={16} className="text-gray-400" /> Email Address
+//               </label>
+//               <input
+//                 type="email"
+//                 value={emailId}
+//                 onChange={(e) => setEmail(e.target.value)}
+//                 required
+//                 placeholder="john@example.com"
+//                 className="w-full rounded-lg border border-gray-200 p-2.5 text-gray-800 focus:ring-2 focus:ring-gray-900 outline-none transition-all"
+//               />
+//             </div>
+
+//             {/* Password */}
+//             <div>
+//               <label className="text-sm font-medium text-gray-700 mb-1.5 flex items-center gap-2">
+//                 <Lock size={16} className="text-gray-400" /> Password
+//               </label>
+//               <input
+//                 type="password"
+//                 value={password}
+//                 onChange={(e) => setPassword(e.target.value)}
+//                 required
+//                 placeholder="••••••••"
+//                 className="w-full rounded-lg border border-gray-200 p-2.5 text-gray-800 focus:ring-2 focus:ring-gray-900 outline-none transition-all"
+//               />
+//             </div>
+//           </div>
+
+//           <div className="pt-4 border-t border-gray-100 flex flex-col gap-4">
+//             <button
+//               type="submit"
+//               disabled={loading}
+//               className="w-full bg-gray-900 text-white px-6 py-3 rounded-xl hover:bg-black transition-all flex items-center justify-center gap-2 font-medium disabled:opacity-50"
+//             >
+//               <UserPlus size={18} />
+//               {loading ? "Creating User..." : "Create User Account"}
+//             </button>
+
+//             <p className="text-center text-sm text-gray-500">
+//               User will be assigned a default role. Manage roles in{" "}
+//               <button
+//                 onClick={() => navigate("/view-users")}
+//                 className="text-gray-900 font-semibold hover:underline"
+//               >
+//                 Manage Users
+//               </button>
+//             </p>
+//           </div>
+//         </form>
+//       </div>
+//     </div>
+//   );
+// }
+
+// export default DynamicSignup;
