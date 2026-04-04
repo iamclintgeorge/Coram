@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import { toast } from "react-toastify";
 import { Save, RotateCcw } from "lucide-react";
 
@@ -19,60 +18,144 @@ const BILLING_PERIODS = [
   { value: "monthly", label: "Monthly" },
 ];
 
-const handleCreateNew = () => {
-  setConfig({
+// MOCK DATA FOR DEMO
+const MOCK_RATE_CARDS = [
+  {
+    id: 1,
+    name: "Default INR Card",
     currency: "₹",
     currency_code: "INR",
-    cpu_rate: 0,
-    ram_rate: 0,
-    ram_alloc_rate: 0,
-    disk_rate: 0,
-    disk_alloc_rate: 0,
-    uptime_rate: 0,
     billing_period: "hourly",
-  });
-  toast.info("New rate card initialized — configure and save");
-};
+    cpu_rate: 0.05,
+    ram_rate: 0.002,
+    ram_alloc_rate: 0.002,
+    disk_rate: 0.001,
+    disk_alloc_rate: 0.001,
+    uptime_rate: 0.01,
+  },
+  {
+    id: 2,
+    name: "USD Daily Plan",
+    currency: "$",
+    currency_code: "USD",
+    billing_period: "daily",
+    cpu_rate: 0.06,
+    ram_rate: 0.003,
+    ram_alloc_rate: 0.003,
+    disk_rate: 0.002,
+    disk_alloc_rate: 0.002,
+    uptime_rate: 0.015,
+  },
+  {
+    id: 3,
+    name: "Euro Monthly Card",
+    currency: "€",
+    currency_code: "EUR",
+    billing_period: "monthly",
+    cpu_rate: 0.04,
+    ram_rate: 0.0025,
+    ram_alloc_rate: 0.0025,
+    disk_rate: 0.0015,
+    disk_alloc_rate: 0.0015,
+    uptime_rate: 0.012,
+  },
+];
 
 const BillingSettings = () => {
   const [config, setConfig] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [rateCards, setRateCards] = useState([]);
+  const [creatingNew, setCreatingNew] = useState(false);
 
   useEffect(() => {
-    fetchConfig();
+    // For mockup/demo, we use mock data instead of fetching from API
+    setRateCards(MOCK_RATE_CARDS);
   }, []);
 
-  const fetchConfig = async () => {
+  const handleCreateNew = () => {
+    setConfig({
+      name: "", // new field for Rate Card Name
+      created_at: new Date().toISOString().slice(0, 10), // YYYY-MM-DD
+      currency: "₹",
+      currency_code: "INR",
+      cpu_rate: 0,
+      ram_rate: 0,
+      ram_alloc_rate: 0,
+      disk_rate: 0,
+      disk_alloc_rate: 0,
+      uptime_rate: 0,
+      billing_period: "hourly",
+    });
+    setCreatingNew(true);
+    toast.info("New rate card initialized — configure and save");
+  };
+
+  const createBillingConfig = async () => {
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_admin_server}/api/billing/config`,
+      const res = await axios.post(
+        `${import.meta.env.VITE_admin_server}/api/billing/create-config`,
         { withCredentials: true },
       );
-      setConfig(response.data);
     } catch (err) {
-      console.error("Error fetching billing config:", err);
-      toast.error("Failed to load billing configuration");
-    } finally {
-      setLoading(false);
+      console.error("Failed to Create BillingConfig", err);
     }
   };
 
-  const handleSave = async () => {
-    setSaving(true);
+  const fetchBillingConfig = async () => {
     try {
-      await axios.put(
-        `${import.meta.env.VITE_admin_server}/api/billing/config`,
-        config,
+      const res = await axios.get(
+        `${import.meta.env.VITE_admin_server}/api/billing/fetch-config`,
         { withCredentials: true },
       );
-      toast.success("Billing configuration saved!");
     } catch (err) {
-      console.error("Error saving billing config:", err);
-      toast.error("Failed to save billing configuration");
-    } finally {
-      setSaving(false);
+      console.error("Failed to fetch BillingConfig", err);
     }
+  };
+
+  const updateBillingConfig = async () => {
+    try {
+      const res = await axios.patch(
+        `${import.meta.env.VITE_admin_server}/api/billing/update-config`,
+        { withCredentials: true },
+      );
+    } catch (err) {
+      console.error("Failed to Update BillingConfig", err);
+    }
+  };
+
+  const deleteBillingConfig = async () => {
+    try {
+      const res = await axios.delete(
+        `${import.meta.env.VITE_admin_server}/api/billing/delete-config`,
+        { withCredentials: true },
+      );
+    } catch (err) {
+      console.error("Failed to Delete BillingConfig", err);
+    }
+  };
+
+  const handleSave = () => {
+    if (!config.name) {
+      toast.error("Please enter a Rate Card Name before saving");
+      return;
+    }
+
+    if (creatingNew) {
+      const newCard = {
+        ...config,
+        id: rateCards.length ? Math.max(...rateCards.map((c) => c.id)) + 1 : 1,
+      };
+      setRateCards((prev) => [...prev, newCard]);
+      toast.success("New rate card created!");
+    } else {
+      setRateCards((prev) =>
+        prev.map((c) => (c.id === config.id ? config : c)),
+      );
+      toast.success("Rate card updated!");
+    }
+
+    setCreatingNew(false);
+    setConfig(null);
   };
 
   const handleReset = () => {
@@ -91,6 +174,10 @@ const BillingSettings = () => {
     toast.info("Reset to defaults — click Save to apply");
   };
 
+  const handleDelete = (id) => {
+    toast.info(`Mock delete of rate card ${id}`);
+  };
+
   const updateField = (field, value) => {
     setConfig((prev) => ({ ...prev, [field]: value }));
   };
@@ -102,17 +189,6 @@ const BillingSettings = () => {
       updateField("currency_code", cur.code);
     }
   };
-
-  if (loading || !config) {
-    return (
-      <div className="p-8">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-200 rounded-xl w-1/3" />
-          <div className="h-64 bg-gray-200 rounded-2xl" />
-        </div>
-      </div>
-    );
-  }
 
   const rateFields = [
     {
@@ -153,9 +229,76 @@ const BillingSettings = () => {
     },
   ];
 
+  // --- Show list of existing rate cards if not creating new ---
+  if (!creatingNew) {
+    return (
+      <div className="p-8 mx-auto font-inter">
+        <div className="flex items-center justify-between mb-8">
+          <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">
+            Billing Rate Cards
+          </h1>
+          <button
+            onClick={handleCreateNew}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
+          >
+            <span className="text-lg leading-none">＋</span> New Rate Card
+          </button>
+        </div>
+
+        {rateCards.length === 0 ? (
+          <p className="text-gray-500">
+            No rate cards found. Click "New Rate Card" to create one.
+          </p>
+        ) : (
+          <div className="space-y-4">
+            {rateCards.map((card) => (
+              <div
+                key={card.id}
+                className="flex justify-between items-center bg-white border border-gray-200 rounded-2xl p-4"
+              >
+                <div>
+                  <p className="font-semibold text-gray-900">
+                    {card.name} {/* Show Name instead of currency_code */}
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    Currency: {card.currency_code}, Billing Period:{" "}
+                    {card.billing_period}
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    CPU: {card.currency}
+                    {card.cpu_rate}, RAM: {card.currency}
+                    {card.ram_rate}, Disk: {card.currency}
+                    {card.disk_rate}
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setConfig(card);
+                      setCreatingNew(true);
+                    }}
+                    className="px-3 py-1.5 bg-indigo-50 text-indigo-700 rounded-xl hover:bg-indigo-100 transition-colors text-sm"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(card.id)}
+                    className="px-3 py-1.5 bg-red-50 text-red-700 rounded-xl hover:bg-red-100 transition-colors text-sm"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // --- Show the form when creating new or editing ---
   return (
     <div className="p-8 mx-auto font-inter">
-      {/* Header */}
       <div className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-semibold text-gray-900 tracking-tight">
@@ -167,13 +310,11 @@ const BillingSettings = () => {
         </div>
         <div className="flex items-center gap-3">
           <button
-            onClick={handleCreateNew}
+            onClick={() => setCreatingNew(false)}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
           >
-            <span className="text-lg leading-none">＋</span>
-            New Rate Card
+            Cancel
           </button>
-
           <button
             onClick={handleReset}
             className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors"
@@ -181,7 +322,6 @@ const BillingSettings = () => {
             <RotateCcw className="w-4 h-4" />
             Reset Defaults
           </button>
-
           <button
             onClick={handleSave}
             disabled={saving}
@@ -199,6 +339,38 @@ const BillingSettings = () => {
               </>
             )}
           </button>
+        </div>
+      </div>
+
+      {/* Rate Card Name & Date */}
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">
+          Rate Card Details
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Rate Card Name
+            </label>
+            <input
+              type="text"
+              value={config.name || ""}
+              onChange={(e) => updateField("name", e.target.value)}
+              placeholder="Enter rate card name"
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Date Created
+            </label>
+            <input
+              type="date"
+              value={config.created_at || new Date().toISOString().slice(0, 10)}
+              onChange={(e) => updateField("created_at", e.target.value)}
+              className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-gray-800 focus:outline-none focus:ring-2 focus:ring-indigo-200 focus:border-indigo-400 transition-all"
+            />
+          </div>
         </div>
       </div>
 
@@ -274,32 +446,6 @@ const BillingSettings = () => {
             </div>
           ))}
         </div>
-      </div>
-
-      {/* Rate Preview */}
-      <div className="mt-6 bg-white border border-gray-400 rounded-2xl p-6">
-        <h3 className="text-sm font-semibold text-black uppercase tracking-wider mb-3">
-          Rate Preview
-        </h3>
-        <p className="text-sm text-gray-600">
-          A VM with{" "}
-          <span className="font-semibold">2 CPU cores at 50% usage</span>,{" "}
-          <span className="font-semibold">2 GB RAM</span>,{" "}
-          <span className="font-semibold">20 GB disk</span>, running for{" "}
-          <span className="font-semibold">24 hours</span> would cost
-          approximately:{" "}
-          <span className="text-2xl font-bold text-red-600 ml-2">
-            {config.currency}
-            {(
-              50 * config.cpu_rate +
-              2048 * config.ram_rate +
-              2048 * config.ram_alloc_rate +
-              20 * config.disk_rate +
-              20 * config.disk_alloc_rate +
-              24 * config.uptime_rate
-            ).toFixed(2)}
-          </span>
-        </p>
       </div>
     </div>
   );

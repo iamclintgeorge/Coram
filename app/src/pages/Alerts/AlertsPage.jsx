@@ -166,6 +166,40 @@ const AlertsPage = () => {
       ? rules
       : rules.filter((r) => (r.target_type || "vm") === activeFilter);
 
+  // Inside AlertsPage component, after existing imports and hooks
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  // Pagination logic
+  const paginatedEvents = events.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE,
+  );
+  const totalPages = Math.ceil(events.length / ITEMS_PER_PAGE);
+
+  // Handle Acknowledge All
+  const handleAcknowledgeAll = async () => {
+    const unacknowledgedEvents = events.filter((e) => !e.acknowledged);
+    if (unacknowledgedEvents.length === 0) return;
+
+    try {
+      await Promise.all(
+        unacknowledgedEvents.map((e) =>
+          axios.put(
+            `${import.meta.env.VITE_admin_server}/api/alerts/events/${e.id}/acknowledge`,
+            {},
+            { withCredentials: true },
+          ),
+        ),
+      );
+      toast.success("All alerts acknowledged");
+      refreshEvents();
+    } catch (err) {
+      toast.error("Failed to acknowledge all alerts");
+    }
+  };
+
   return (
     <div className="p-8 max-w-6xl mx-auto font-inter">
       {/* Header */}
@@ -457,10 +491,22 @@ const AlertsPage = () => {
       </div>
 
       {/* Alert Events Section */}
+      {/* Alert Events Section */}
       <div className="bg-white border border-gray-200 rounded-2xl p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-6">
-          Triggered Alerts
-        </h2>
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-lg font-semibold text-gray-900">
+            Triggered Alerts
+          </h2>
+          {unacknowledgedCount > 0 && (
+            <button
+              onClick={handleAcknowledgeAll}
+              className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              <Check className="w-3.5 h-3.5" />
+              Acknowledge All
+            </button>
+          )}
+        </div>
 
         {events.length === 0 ? (
           <div className="text-center py-8 text-gray-400">
@@ -469,7 +515,7 @@ const AlertsPage = () => {
           </div>
         ) : (
           <div className="space-y-3">
-            {events.map((event) => {
+            {paginatedEvents.map((event) => {
               const isNodeAlert = event.target_type === "node";
               return (
                 <div
@@ -534,7 +580,7 @@ const AlertsPage = () => {
                       </p>
                     </div>
                   </div>
-                  {!event.acknowledged && (
+                  {!event.acknowledged ? (
                     <button
                       onClick={() => handleAcknowledge(event.id)}
                       className="flex items-center gap-1.5 px-4 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
@@ -542,8 +588,7 @@ const AlertsPage = () => {
                       <Check className="w-3.5 h-3.5" />
                       Acknowledge
                     </button>
-                  )}
-                  {event.acknowledged && (
+                  ) : (
                     <span className="text-xs text-gray-400 flex items-center gap-1">
                       <Check className="w-3.5 h-3.5" /> Acknowledged
                     </span>
@@ -551,6 +596,43 @@ const AlertsPage = () => {
                 </div>
               );
             })}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex justify-center gap-2 mt-4">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                >
+                  Prev
+                </button>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map(
+                  (page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`px-3 py-1 border rounded-lg text-sm transition-colors ${
+                        currentPage === page
+                          ? "bg-gray-900 text-white border-gray-900"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ),
+                )}
+                <button
+                  onClick={() =>
+                    setCurrentPage((p) => Math.min(totalPages, p + 1))
+                  }
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 border rounded-lg text-sm text-gray-600 hover:bg-gray-100 disabled:opacity-50"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
