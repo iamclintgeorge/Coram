@@ -10,6 +10,14 @@ const SettingsPage = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [theme, setTheme] = useState("light");
+  const [isNodeModalOpen, setIsNodeModalOpen] = useState(false);
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [form, setForm] = useState({
+    host: "",
+    port: "",
+    nodeName: "",
+    apiToken: "",
+  });
 
   useEffect(() => {
     fetchProxmoxConfig();
@@ -33,17 +41,83 @@ const SettingsPage = () => {
     }
   };
 
-  const handleNodeChange = (index, field, value) => {
-    const updatedNodes = [...nodes];
-    updatedNodes[index][field] = value;
-    setNodes(updatedNodes);
+  // OPEN MODAL FOR NEW NODE
+
+  const addNode = async () => {
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_admin_server}/api/proxmox/create-config`,
+        { withCredentials: true },
+      );
+    } catch (err) {
+      console.error("Failed to Create Node Config", err);
+    }
   };
 
-  const addNode = () => {
-    setNodes((prev) => [
-      ...prev,
-      { host: "", port: "", nodeName: "", apiToken: "" },
-    ]);
+  const fetchNode = async () => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_admin_server}/api/proxmox/get-config`,
+        { withCredentials: true },
+      );
+    } catch (err) {
+      console.error("Failed to fetch Node Config", err);
+    }
+  };
+
+  const updateNode = async () => {
+    try {
+      const res = await axios.patch(
+        `${import.meta.env.VITE_admin_server}/api/proxmox/update-config`,
+        { withCredentials: true },
+      );
+    } catch (err) {
+      console.error("Failed to Update Node Config", err);
+    }
+  };
+
+  const deleteNode = async () => {
+    try {
+      const res = await axios.delete(
+        `${import.meta.env.VITE_admin_server}/api/proxmox/delete-config`,
+        { withCredentials: true },
+      );
+    } catch (err) {
+      console.error("Failed to Delete Node Config", err);
+    }
+  };
+
+  const handleAddNode = () => {
+    setEditingIndex(null);
+    setForm({ host: "", port: "", nodeName: "", apiToken: "" });
+    setIsNodeModalOpen(true);
+  };
+
+  // OPEN MODAL FOR EDIT
+  const handleEditNode = (index) => {
+    setEditingIndex(index);
+    setForm(nodes[index]);
+    setIsNodeModalOpen(true);
+  };
+
+  // SAVE NODE
+  const handleSaveNode = () => {
+    if (!form.host || !form.port || !form.nodeName || !form.apiToken) {
+      toast.error("All fields are required");
+      return;
+    }
+
+    if (editingIndex !== null) {
+      // update existing
+      const updated = [...nodes];
+      updated[editingIndex] = form;
+      setNodes(updated);
+    } else {
+      // add new
+      setNodes((prev) => [...prev, form]);
+    }
+
+    setIsNodeModalOpen(false);
   };
 
   const removeNode = (index) => {
@@ -159,106 +233,121 @@ const SettingsPage = () => {
           </div>
         ) : (
           <>
-            <h2 className="text-xl font-semibold mb-6 flex items-center gap-2">
-              Proxmox Nodes
-            </h2>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {nodes.map((node, index) => (
-                <div
-                  key={index}
-                  className="grid grid-cols-1 md:grid-cols-2 gap-6 border-b border-gray-300 pb-4 mb-4 relative"
-                >
-                  {nodes.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeNode(index)}
-                      className="absolute -top-5 right-0 mt-2 mr-2 text-red-500 font-bold"
-                    >
-                      ✕
-                    </button>
-                  )}
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-400 mb-1">
-                      Host (IP or Domain)
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      className="w-full rounded-md border border-gray-200 shadow-sm p-3 text-gray-800"
-                      value={node.host}
-                      onChange={(e) =>
-                        handleNodeChange(index, "host", e.target.value)
-                      }
-                      placeholder="192.168.1.100"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-400 mb-1">
-                      Port
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      className="w-full rounded-md border border-gray-200 shadow-sm p-3 text-gray-800"
-                      value={node.port}
-                      onChange={(e) =>
-                        handleNodeChange(index, "port", e.target.value)
-                      }
-                      placeholder="8006"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-400 mb-1">
-                      Node Name
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      className="w-full rounded-md border border-gray-200 shadow-sm p-3 text-gray-800"
-                      value={node.nodeName}
-                      onChange={(e) =>
-                        handleNodeChange(index, "nodeName", e.target.value)
-                      }
-                      placeholder="pve"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-neutral-400 mb-1">
-                      API Token
-                    </label>
-                    <input
-                      type="text"
-                      required
-                      className="w-full rounded-md border border-gray-200 shadow-sm p-3 text-gray-800"
-                      value={node.apiToken}
-                      onChange={(e) =>
-                        handleNodeChange(index, "apiToken", e.target.value)
-                      }
-                      placeholder="root@pam!token=secret"
-                    />
-                    <p className="mt-1 text-xs text-neutral-500">
-                      Format: TokenID=Secret
-                    </p>
-                  </div>
-                </div>
-              ))}
-              <button
-                type="button"
-                onClick={addNode}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition"
-              >
-                + Add Node
-              </button>
-              <div className="flex justify-end pt-4 border-t border-neutral-700">
+            <div className="space-y-4">
+              {/* Header */}
+              <div className="flex justify-between items-center">
+                <h2 className="text-xl font-semibold">Proxmox Nodes</h2>
+
                 <button
-                  type="submit"
-                  disabled={saving}
-                  className="bg-gray-900 text-white px-6 py-2 rounded-xl hover:bg-black transition-all disabled:opacity-50"
+                  onClick={handleAddNode}
+                  className="px-4 py-2 bg-gray-900 text-white rounded-lg text-sm"
                 >
-                  {saving ? "Saving..." : "Save Settings"}
+                  + Add Node
                 </button>
               </div>
-            </form>
+
+              {/* Node List */}
+              {nodes.length === 0 ? (
+                <div className="text-gray-500 text-sm">No nodes added yet.</div>
+              ) : (
+                <div className="space-y-3">
+                  {nodes.map((node, index) => (
+                    <div
+                      key={index}
+                      className="flex justify-between items-center border border-gray-200 rounded-xl p-4"
+                    >
+                      <div>
+                        <div className="font-medium text-gray-900">
+                          {node.nodeName || "Unnamed Node"}
+                        </div>
+                        <div className="text-sm text-gray-500">
+                          {node.host}:{node.port}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEditNode(index)}
+                          className="px-3 py-1 text-sm border rounded-lg hover:bg-gray-100"
+                        >
+                          Edit
+                        </button>
+
+                        <button
+                          onClick={() => removeNode(index)}
+                          className="px-3 py-1 text-sm text-red-600 border border-red-200 rounded-lg hover:bg-red-50"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+            {isNodeModalOpen && (
+              <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
+                <div className="bg-white w-full max-w-lg rounded-xl shadow-lg p-6">
+                  <h2 className="text-lg font-semibold mb-4">
+                    {editingIndex !== null ? "Edit Node" : "Add Node"}
+                  </h2>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <input
+                      placeholder="Host"
+                      value={form.host}
+                      onChange={(e) =>
+                        setForm({ ...form, host: e.target.value })
+                      }
+                      className="p-3 border rounded-lg"
+                    />
+
+                    <input
+                      placeholder="Port"
+                      value={form.port}
+                      onChange={(e) =>
+                        setForm({ ...form, port: e.target.value })
+                      }
+                      className="p-3 border rounded-lg"
+                    />
+
+                    <input
+                      placeholder="Node Name"
+                      value={form.nodeName}
+                      onChange={(e) =>
+                        setForm({ ...form, nodeName: e.target.value })
+                      }
+                      className="p-3 border rounded-lg"
+                    />
+
+                    <input
+                      placeholder="API Token"
+                      value={form.apiToken}
+                      onChange={(e) =>
+                        setForm({ ...form, apiToken: e.target.value })
+                      }
+                      className="p-3 border rounded-lg"
+                    />
+                  </div>
+
+                  <div className="flex justify-end gap-2 mt-6">
+                    <button
+                      onClick={() => setIsNodeModalOpen(false)}
+                      className="px-4 py-2 border rounded-lg"
+                    >
+                      Cancel
+                    </button>
+
+                    <button
+                      onClick={handleSaveNode}
+                      className="px-4 py-2 bg-gray-900 text-white rounded-lg"
+                    >
+                      Save
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </>
         )}
       </div>

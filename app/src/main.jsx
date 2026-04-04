@@ -31,6 +31,7 @@ import VmPage from "./pages/VirtualMachines/vmPage";
 import Billing from "./pages/Billing/billing";
 import BillingSettings from "./pages/Billing/BillingSettings";
 import OrderVM from "./pages/OrderVM/orderVM";
+import ViewOrdersPage from "./pages/OrderVM/viewOrder";
 
 // Logs & Alerts
 import LogsPage from "./pages/Logs/LogsPage";
@@ -58,6 +59,7 @@ const App = () => {
               <Route path="/vms" element={<VMList />} />
               <Route path="/vms/:id" element={<VmPage />} />
               <Route path="/order-vm" element={<OrderVM />} />
+              <Route path="/view-order" element={<ViewOrdersPage />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/billing/settings" element={<BillingSettings />} />
               <Route path="/logs" element={<LogsPage />} />

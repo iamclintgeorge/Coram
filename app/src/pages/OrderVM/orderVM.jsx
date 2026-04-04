@@ -16,11 +16,44 @@ const OrderVM = () => {
     { id: "t3", name: "CentOS Stream 9 (Large)", specs: "8 vCPU, 16GB RAM" },
   ];
 
+  const [orders, setOrders] = useState([
+    {
+      id: "o1",
+      vmName: "prod-server",
+      template: "Ubuntu 22.04 LTS (Small)",
+      specs: "2 vCPU, 4GB RAM",
+      status: "pending",
+      created_on: "2024-04-01",
+    },
+  ]);
+
   const handleOrder = (e) => {
     e.preventDefault();
     setLoading(true);
     // Logic to insert into vmOrders.db goes here
     setTimeout(() => setLoading(false), 1000);
+  };
+
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case "approved":
+        return "bg-green-50 text-green-700";
+      case "rejected":
+        return "bg-red-50 text-red-700";
+      default:
+        return "bg-yellow-50 text-yellow-700";
+    }
+  };
+
+  const createOrder = async () => {
+    try {
+      const res = await axios.post(
+        `${import.meta.env.VITE_admin_server}/api/order/create-order`,
+        { withCredentials: true },
+      );
+    } catch (err) {
+      console.error("Failed to Create Template", err);
+    }
   };
 
   return (
@@ -33,10 +66,6 @@ const OrderVM = () => {
           </h1>
           <p className="text-gray-500 mt-1">Place your order for VMs here</p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 text-gray-600 hover:bg-gray-50 transition-colors">
-          <span className="text-lg leading-none">＋</span>
-          Create New Template
-        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -99,7 +128,7 @@ const OrderVM = () => {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-gray-900 text-white px-6 py-3 rounded-xl hover:bg-black transition-all flex items-center justify-center gap-2 font-medium disabled:opacity-50"
+                  className="w-full bg-gray-900 text-white px-6 py-2 rounded-md hover:bg-black transition-all flex text-sm items-center justify-center gap-2 font-medium disabled:opacity-50"
                 >
                   <Save size={18} />
                   {loading ? "Processing..." : "Confirm Order"}
@@ -140,6 +169,49 @@ const OrderVM = () => {
             </div>
           </div>
         </div>
+      </div>
+      <div className="mt-12">
+        <h2 className="text-xl font-semibold text-gray-900 mb-6">My Orders</h2>
+
+        {orders.length === 0 ? (
+          <div className="text-gray-500 text-sm">No orders placed yet.</div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {orders.map((order) => (
+              <div
+                key={order.id}
+                className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
+              >
+                <div className="flex justify-between items-center mb-2">
+                  <h3 className="font-semibold text-gray-900">
+                    {order.vmName}
+                  </h3>
+
+                  <span
+                    className={`px-2 py-0.5 text-xs rounded-full ${getStatusStyle(
+                      order.status,
+                    )}`}
+                  >
+                    {order.status}
+                  </span>
+                </div>
+
+                <p className="text-sm text-gray-500 mb-1">{order.template}</p>
+
+                <div className="flex items-center justify-between text-sm text-gray-600">
+                  <div className="flex items-center gap-1">
+                    <Cpu size={14} />
+                    {order.specs}
+                  </div>
+
+                  <span className="text-xs text-gray-400">
+                    {order.created_on}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

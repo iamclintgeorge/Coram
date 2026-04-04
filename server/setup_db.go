@@ -7,7 +7,7 @@ package main
 // 	"github.com/iamclintgeorge/Coram/internal/models"
 // )
 
-// //To be deleted as it serves no purpose
+// //FIXME: To be deleted as it serves no purpose
 
 // func main() {
 // 	config.Connect()

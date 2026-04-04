@@ -23,6 +23,7 @@ const Dashboard = () => {
       `${import.meta.env.VITE_admin_server}/api/proxmox/fetchNodeStats/${nodeName}`,
       { withCredentials: true },
     );
+    console.log("fetchStats:", response);
     return response.data;
   };
 
