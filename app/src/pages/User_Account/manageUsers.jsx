@@ -5,24 +5,26 @@ import { toast } from "react-toastify";
 
 const ViewUsersPage = () => {
   const nodeName = "pve";
-  const [users, setUsers] = useState([
-    {
-      id: "u123",
-      name: "John Doe",
-      email: "john.doe@example.com",
-      role: "admin",
-      created_on: "2024-03-15T10:00:00Z",
-      vms: ["100", "101"],
-    },
-    {
-      id: "u124",
-      name: "Jane Smith",
-      email: "jane.smith@student.in",
-      role: "user",
-      created_on: "2024-03-20T14:30:00Z",
-      vms: [],
-    },
-  ]);
+  // const [users, setUsers] = useState([
+  //   {
+  //     id: "u123",
+  //     name: "John Doe",
+  //     email: "john.doe@example.com",
+  //     role: "admin",
+  //     created_on: "2024-03-15T10:00:00Z",
+  //     vms: ["100", "101"],
+  //   },
+  //   {
+  //     id: "u124",
+  //     name: "Jane Smith",
+  //     email: "jane.smith@student.in",
+  //     role: "user",
+  //     created_on: "2024-03-20T14:30:00Z",
+  //     vms: [],
+  //   },
+  // ]);
+
+  const [users, setUsers] = useState([]);
 
   // 🔹 Mock VM list
   // const [vmList] = useState([
@@ -71,9 +73,18 @@ const ViewUsersPage = () => {
         { withCredentials: true },
       );
 
-      console.log("Get Users", res);
+      console.log("Get Users", res.data.users);
 
-      setUsers(res.data);
+      const formattedUsers = res.data.users.map((u) => ({
+        id: u.ID,
+        name: u.UserName,
+        email: u.Email,
+        role: u.Role,
+        created_on: u.CreatedOn,
+        vms: u.VMs || [],
+      }));
+
+      setUsers(formattedUsers);
     } catch (err) {
       console.error("Failed to fetch Users", err);
     }
@@ -138,11 +149,19 @@ const ViewUsersPage = () => {
     toast.success("User deleted successfully");
   };
 
-  const filteredUsers = users.filter(
-    (u) =>
-      u.name?.toLowerCase().includes(search.toLowerCase()) ||
-      u.email?.toLowerCase().includes(search.toLowerCase()),
-  );
+  // const filteredUsers = users?.filter(
+  //   (u) =>
+  //     u.name?.toLowerCase().includes(search.toLowerCase()) ||
+  //     u.email?.toLowerCase().includes(search.toLowerCase()),
+  // );
+
+  const filteredUsers = Array.isArray(users)
+    ? users.filter(
+        (u) =>
+          u.name?.toLowerCase().includes(search.toLowerCase()) ||
+          u.email?.toLowerCase().includes(search.toLowerCase()),
+      )
+    : [];
 
   return (
     <div className="p-8 mx-auto font-inter max-w-6xl">
