@@ -8,7 +8,7 @@ package main
 // 	"net/http"
 // )
 
-// //To be deleted as it serves no purpose
+// //FIXME: To be deleted as it serves no purpose
 
 // // Replace these with your actual values
 // const (
@@ -96,7 +96,7 @@ package main
 // 	fmt.Printf("Disk:        %d GB\n", vmStatus.Data.MaxDisk/(1024*1024*1024))
 // 	fmt.Printf("Uptime:      %d seconds\n", vmStatus.Data.Uptime)
 // 	fmt.Println("\n=== Raw JSON ===")
-	
+
 // 	// Pretty print JSON
 // 	var prettyJSON map[string]interface{}
 // 	json.Unmarshal(body, &prettyJSON)

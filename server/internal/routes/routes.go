@@ -12,6 +12,7 @@ func RegisterRoutes(r *gin.Engine) {
 		BillingRoutes(api)
 		LoggingRoutes(api)
 		AlertingRoutes(api)
+		OrderRoutes(api)
 	}
 
 	proxmox := r.Group("/api/proxmox") 

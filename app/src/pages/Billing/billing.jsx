@@ -132,6 +132,17 @@ const Billing = () => {
     refresh,
   } = usePolling(fetchStats, POLL_INTERVAL);
 
+  const fetchInvoice = async () => {
+    try {
+      const res = await axios.get(
+        `${import.meta.env.VITE_admin_server}/api/billing/fetch-invoice`,
+        { withCredentials: true },
+      );
+    } catch (err) {
+      console.error("Failed to fetch Invoice", err);
+    }
+  };
+
   const calculateCharges = (vm) => {
     if (!billingConfig) return null;
     const c = billingConfig;

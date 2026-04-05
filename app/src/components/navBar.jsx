@@ -65,7 +65,7 @@ const NavBar = () => {
                 className="cursor-pointer mr-5 pt-[22px] font-light font-inter"
                 onClick={handleUserClick}
               >
-                {user.UserName || "Undefined"}
+                {user.username || "Undefined"}
               </p>
               {/* <p
                 className="cursor-pointer mr-5 pt-[22px] font-light font-inter"

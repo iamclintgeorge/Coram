@@ -50,7 +50,7 @@ func SetupRootAccount(c *gin.Context) {
 
 	user := models.User{
 		Email:    req.Email,
-		UserName: "root",
+		Username: "root",
 		Password: string(hashedPassword),
 		Role:     "root",
 	}
@@ -98,11 +98,11 @@ func SetupProxmoxConfig(c *gin.Context) {
 
 // GetProxmoxConfig retrieves the current Proxmox settings
 func GetProxmoxConfig(c *gin.Context) {
-	pConfig := config.GetProxmoxConfig()
-	if pConfig == nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "No Proxmox configuration found"})
+	pConfigs := config.GetAllProxmoxConfigs()
+	if len(pConfigs) == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"error": "No Proxmox configuration found", "nodes": []interface{}{}})
 		return
 	}
-	c.JSON(http.StatusOK, pConfig)
+	c.JSON(http.StatusOK, gin.H{"nodes": pConfigs})
 }
 

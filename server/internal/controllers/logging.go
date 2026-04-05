@@ -81,9 +81,9 @@ func GetLogs(c *gin.Context) {
 // GetProxmoxSyslog proxies the Proxmox syslog API
 func GetProxmoxSyslog(c *gin.Context) {
 	nodeName := c.Param("node")
-	pConfig := config.GetProxmoxConfig()
-	if pConfig == nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Proxmox configuration is missing"})
+	var pConfig models.ProxmoxConfig
+	if err := config.DB.Where("node_name = ?", nodeName).First(&pConfig).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Node configuration not found"})
 		return
 	}
 	apiToken := pConfig.APIToken

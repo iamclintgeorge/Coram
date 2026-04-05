@@ -16,4 +16,7 @@ func UserRoutes(rg *gin.RouterGroup) {
      rg.POST("/signup", controllers.SignupController)
 	rg.GET("/check-auth", middleware.AuthMiddleware(), middleware.CheckAuth)
 	rg.POST("/signout", controllers.LogoutController)
+	rg.GET("/get-users", controllers.FetchUsers)
+	rg.DELETE("/delete-users/:id", controllers.DeleteUsers)
+	rg.POST("/update-vm-assign", controllers.UpdateVMAssign)
 }

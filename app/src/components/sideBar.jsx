@@ -6,7 +6,8 @@ import { useAuth } from "../services/useAuthCheck";
 const menuItems = [
   { path: "/dashboard", label: "Overview", icon: Server },
   { path: "/template", label: "Templates", roles: ["root"], icon: Server },
-  { path: "/order-vm", label: "Order VM", icon: Server },
+  { path: "/order-vm", label: "Order VM", roles: ["user"], icon: Server },
+  { path: "/view-order", label: "View Order", roles: ["root"], icon: Server },
   { path: "/vms", label: "View VMs", roles: ["root"], icon: Server },
   { path: "/billing", label: "Invoice", icon: Server },
   {
@@ -30,7 +31,7 @@ const menuItems = [
 const DynamicSideBar = () => {
   const { user } = useAuth();
   const location = useLocation();
-  const userRole = user?.UserName; //Change this to user.Role later
+  const userRole = user?.role;
 
   if (!user) return null;
 
@@ -53,9 +54,6 @@ const DynamicSideBar = () => {
                     : "hover:bg-gray-100 text-gray-600"
                 }`}
               >
-                {/* <div className="text-base">
-                  {typeof Icon === "string" ? Icon : <Icon size={18} />}
-                </div> */}
                 <span className="font-medium">{label}</span>
               </div>
             </Link>

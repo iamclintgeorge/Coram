@@ -21,7 +21,6 @@ import Dashboard from "./pages/Dashboard/dashboard";
 import SettingsPage from "./pages/settingsPage";
 import TemplatePage from "./pages/templatePage";
 import { AuthProvider } from "./services/useAuthCheck";
-import ProfilePage from "./pages/ProfilePage/profilePage";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
@@ -31,11 +30,12 @@ import VmPage from "./pages/VirtualMachines/vmPage";
 import Billing from "./pages/Billing/billing";
 import BillingSettings from "./pages/Billing/BillingSettings";
 import OrderVM from "./pages/OrderVM/orderVM";
+import ViewOrdersPage from "./pages/OrderVM/viewOrder";
+import ManageUsers from "./pages/User_Account/manageUsers";
 
 // Logs & Alerts
 import LogsPage from "./pages/Logs/LogsPage";
 import AlertsPage from "./pages/Alerts/AlertsPage";
-import ManageUsers from "./pages/User_Account/manageUsers";
 
 const App = () => {
   return (
@@ -53,11 +53,11 @@ const App = () => {
               <Route index element={<Navigate to="/dashboard" />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/signup" element={<Signup />} />
-              <Route path="/profile" element={<ProfilePage />} />
               <Route path="/manage-users" element={<ManageUsers />} />
               <Route path="/vms" element={<VMList />} />
               <Route path="/vms/:id" element={<VmPage />} />
               <Route path="/order-vm" element={<OrderVM />} />
+              <Route path="/view-order" element={<ViewOrdersPage />} />
               <Route path="/billing" element={<Billing />} />
               <Route path="/billing/settings" element={<BillingSettings />} />
               <Route path="/logs" element={<LogsPage />} />

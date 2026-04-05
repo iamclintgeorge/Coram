@@ -2,131 +2,180 @@
 package controllers
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/iamclintgeorge/Coram/internal/config"
-	// "github.com/iamclintgeorge/Coram/internal/models"
+	"github.com/iamclintgeorge/Coram/internal/models"
 	proxmox "github.com/iamclintgeorge/Coram/pkg/proxmox/v9.0.3"
 )
 
-//This fetches Information of all the VMs in a node
+// This fetches Information of all the VMs in a node
 func FetchNodeStats(c *gin.Context) {
-	pConfig := config.GetProxmoxConfig()
-	if pConfig == nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Proxmox configuration is missing"})
+	nodeName := c.Param("node")
+	
+	// Find config by node name (assuming unique for simplicity in current frontend)
+	var pConfig models.ProxmoxConfig
+	if err := config.DB.Where("node_name = ?", nodeName).First(&pConfig).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Node configuration not found"})
 		return
 	}
-	apiToken := pConfig.APIToken
-	host := pConfig.Host
-	port := pConfig.Port
-    nodeName := c.Param("node")
 
-    client := proxmox.NewClient(
-        host,
-        port,
-        nodeName,
-        apiToken,
-    )
+	client := proxmox.NewClient(
+		pConfig.Host,
+		pConfig.Port,
+		pConfig.NodeName,
+		pConfig.APIToken,
+	)
 
-    vms, err := client.GetNodeStatus()
-    if err != nil {
-        log.Printf("Error fetching node status: %v", err)
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
+	vms, err := client.GetNodeStatus()
+	if err != nil {
+		log.Printf("Error fetching node status: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-    c.JSON(http.StatusOK, vms)
+	c.JSON(http.StatusOK, vms)
 }
 
 func FetchVMStats(c *gin.Context) {
-	pConfig := config.GetProxmoxConfig()
-	if pConfig == nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Proxmox configuration is missing"})
-		return
-	}
-	apiToken := pConfig.APIToken
-	host := pConfig.Host
-	port := pConfig.Port
-    nodeName := c.Param("node")
+	nodeName := c.Param("node")
 	vmIDStr := c.Param("id")
 
-	log.Println("FetchVMStats")
+	var pConfig models.ProxmoxConfig
+	if err := config.DB.Where("node_name = ?", nodeName).First(&pConfig).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Node configuration not found"})
+		return
+	}
 
-    client := proxmox.NewClient(
-        host,
-        port,
-        nodeName,
-        apiToken,
-    )
+	client := proxmox.NewClient(
+		pConfig.Host,
+		pConfig.Port,
+		pConfig.NodeName,
+		pConfig.APIToken,
+	)
 
 	vmID, err := strconv.Atoi(vmIDStr)
-if err != nil {
-    // Handle the error if the conversion fails
-    c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid VM ID"})
-    return
-}
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid VM ID"})
+		return
+	}
 
-    vms, err := client.GetVMStatus(vmID)
-    if err != nil {
-        log.Printf("Error fetching node status: %v", err)
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
+	vms, err := client.GetVMStatus(vmID)
+	if err != nil {
+		log.Printf("Error fetching VM status: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-    c.JSON(http.StatusOK, vms)
+	c.JSON(http.StatusOK, vms)
 }
 
 func ControlVM(c *gin.Context) {
-	pConfig := config.GetProxmoxConfig()
-	if pConfig == nil {
-		c.JSON(http.StatusServiceUnavailable, gin.H{"error": "Proxmox configuration is missing"})
+	nodeName := c.Param("node")
+	vmIDStr := c.Param("id")
+
+	var pConfig models.ProxmoxConfig
+	if err := config.DB.Where("node_name = ?", nodeName).First(&pConfig).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Node configuration not found"})
 		return
 	}
-	apiToken := pConfig.APIToken
-	host := pConfig.Host
-	port := pConfig.Port
-    nodeName := c.Param("node")
-	vmIDStr := c.Param("id")
-    var payload map[string]interface{}
 
-	fmt.Println("Received payload:", payload)
+	var payload map[string]interface{}
+	if err := c.BindJSON(&payload); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
 
-    if err := c.BindJSON(&payload); err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-        return
-    }
+	action, ok := payload["action"].(string)
+	if !ok {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Action missing or invalid"})
+		return
+	}
 
-	fmt.Println("Received payload:", payload)
+	client := proxmox.NewClient(
+		pConfig.Host,
+		pConfig.Port,
+		pConfig.NodeName,
+		pConfig.APIToken,
+	)
 
-    action := payload["action"].(string)
-    fmt.Println("Received action:", action)
+	vmID, err := strconv.Atoi(vmIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid VM ID"})
+		return
+	}
 
-	    client := proxmox.NewClient(
-        host,
-        port,
-        nodeName,
-        apiToken,
-    )
+	err = client.ControlVM(vmID, action)
+	if err != nil {
+		log.Printf("Error controlling VM: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
 
-		vmID, err := strconv.Atoi(vmIDStr)
-if err != nil {
-    // Handle the error if the conversion fails
-    c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid VM ID"})
-    return
+	c.JSON(http.StatusOK, gin.H{"message": "Action performed successfully"})
 }
 
-        err = client.ControlVM(vmID, action)
-    if err != nil {
-        log.Printf("Error fetching node status: %v", err)
-        c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-        return
-    }
+// Node CRUD Endpoints
+func FetchNodes(c *gin.Context) {
+	var nodes []models.ProxmoxConfig
+	if err := config.DB.Find(&nodes).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch nodes"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"nodes": nodes})
+}
 
-    c.JSON(http.StatusOK, gin.H{"message": "Action performed successfully"})
+func CreateNodes(c *gin.Context) {
+	var node models.ProxmoxConfig
+	if err := c.ShouldBindJSON(&node); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	if err := config.DB.Create(&node).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create node"})
+		return
+	}
+
+	config.UpdateProxmoxConfig(&node)
+	c.JSON(http.StatusCreated, node)
+}
+
+func UpdateNodes(c *gin.Context) {
+	id := c.Param("id")
+	var node models.ProxmoxConfig
+	if err := config.DB.First(&node, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Node not found"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&node); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	if err := config.DB.Save(&node).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update node"})
+		return
+	}
+
+	config.UpdateProxmoxConfig(&node)
+	c.JSON(http.StatusOK, node)
+}
+
+func DeleteNodes(c *gin.Context) {
+	id := c.Param("id")
+	uID, _ := strconv.ParseUint(id, 10, 32)
+	if err := config.DB.Delete(&models.ProxmoxConfig{}, id).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete node"})
+		return
+	}
+
+	config.DeleteProxmoxConfigFromCache(uint(uID))
+	c.JSON(http.StatusOK, gin.H{"message": "Node deleted successfully"})
 }
 
 
