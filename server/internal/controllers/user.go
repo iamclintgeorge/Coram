@@ -174,3 +174,50 @@ func FetchUserController(c *gin.Context) {
     })
 }
 
+
+
+func DeleteUserController(c *gin.Context) {
+    userID := c.Param("id")
+
+    result := config.DB.Where("id = ? AND role <> ?", userID, "root").Delete(&models.User{})
+
+    if result.Error != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    }
+
+    if result.RowsAffected == 0 {
+        c.JSON(http.StatusNotFound, gin.H{"message": "User not found or is protected root"})
+        return
+    }
+
+    c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+}
+
+
+
+func AssignVMController(c *gin.Context) {
+	userID := c.Param("id")
+	vmID := c.Param("vmid")
+	configID := c.Param("config_id")
+
+	vmAssign := models.VmAssigned{
+		UserId:           userID,
+		VmId:             vmID,
+		configId:  configID,
+	}
+
+	result := config.DB.Create(&vmAssign)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"error": result.Error.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message": "VM assigned successfully",
+		"data":    vmAssign,
+	})
+}

@@ -6,7 +6,7 @@ import { useAuth } from "../services/useAuthCheck";
 const menuItems = [
   { path: "/dashboard", label: "Overview", icon: Server },
   { path: "/template", label: "Templates", roles: ["root"], icon: Server },
-  { path: "/order-vm", label: "Order VM", roles: ["client"], icon: Server },
+  { path: "/order-vm", label: "Order VM", roles: ["user"], icon: Server },
   { path: "/view-order", label: "View Order", roles: ["root"], icon: Server },
   { path: "/vms", label: "View VMs", roles: ["root"], icon: Server },
   { path: "/billing", label: "Invoice", icon: Server },
