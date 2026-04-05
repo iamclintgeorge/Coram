@@ -19,12 +19,17 @@ func main() {
 	config.LoadEnv()
 	config.Connect()
 	
+	// Drop deprecated tables
+	config.DB.Migrator().DropTable("proxmox_nodes", "billing_usage_records", "user_node_assignments", "billing_invoices", "user_vms")
+
 	config.DB.AutoMigrate(
 		&models.User{},
-		&models.UserVM{},
+		&models.VmAssigned{},
 		&models.ProxmoxConfig{},
 		&models.BillingConfig{},
 		&models.BillingRecord{},
+		&models.VmOrder{},
+		&models.Template{},
 		&models.CoramLog{},
 		&models.AlertRule{},
 		&models.AlertEvent{},

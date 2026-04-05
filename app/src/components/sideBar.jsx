@@ -31,7 +31,7 @@ const menuItems = [
 const DynamicSideBar = () => {
   const { user } = useAuth();
   const location = useLocation();
-  const userRole = user?.Role;
+  const userRole = user?.role;
 
   if (!user) return null;
 

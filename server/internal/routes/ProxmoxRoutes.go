@@ -9,7 +9,12 @@ import (
 func ProxmoxRoutes(rg *gin.RouterGroup) {
 	rg.GET("/fetchNodeStats/:node", middleware.AuthMiddleware(),controllers.FetchNodeStats)
 	rg.GET("/vms/:node/:id", middleware.AuthMiddleware(),controllers.FetchVMStats)
-	rg.POST("/vms/:node/:id", middleware.AuthMiddleware(),controllers.ControlVM)
+	rg.POST("/vms/:node/:id", middleware.AuthMiddleware(), controllers.ControlVM)
+
+	rg.GET("/get-config", controllers.FetchNodes)
+	rg.PUT("/update-config/:id", controllers.UpdateNodes)
+	rg.POST("/create-config", controllers.CreateNodes)
+	rg.DELETE("/delete-config/:id", controllers.DeleteNodes)
 
 	// vms := rg.Group("/vms")
 	// vms.Use(middleware.AuthMiddleware())

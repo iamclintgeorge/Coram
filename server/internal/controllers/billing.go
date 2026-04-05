@@ -8,61 +8,68 @@ import (
 	"github.com/iamclintgeorge/Coram/internal/models"
 )
 
-// GetBillingConfig returns current billing config (creates defaults if none exist)
-func GetBillingConfig(c *gin.Context) {
-	var billingConfig models.BillingConfig
-
-	result := config.DB.First(&billingConfig)
-	if result.Error != nil {
-		// Create default config
-		billingConfig = models.BillingConfig{
-			Currency:      "₹",
-			CurrencyCode:  "INR",
-			CpuRate:       0.05,
-			RamRate:       0.002,
-			RamAllocRate:  0.002,
-			DiskRate:      0.001,
-			DiskAllocRate: 0.001,
-			UptimeRate:    0.01,
-			BillingPeriod: "hourly",
-		}
-		config.DB.Create(&billingConfig)
+// Billing CRUD Endpoints
+func FetchBill(c *gin.Context) {
+	var records []models.BillingRecord
+	if err := config.DB.Find(&records).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch billing records"})
+		return
 	}
-
-	c.JSON(http.StatusOK, billingConfig)
+	c.JSON(http.StatusOK, records)
 }
 
-// UpdateBillingConfig updates billing rates and currency
-func UpdateBillingConfig(c *gin.Context) {
-	var req models.BillingConfig
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+func CreateRate(c *gin.Context) {
+	var rate models.BillingConfig
+	if err := c.ShouldBindJSON(&rate); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
 		return
 	}
 
-	var existing models.BillingConfig
-	result := config.DB.First(&existing)
-	if result.Error != nil {
-		// Create if not exists
-		config.DB.Create(&req)
-		c.JSON(http.StatusOK, gin.H{"message": "Billing config created", "config": req})
+	if err := config.DB.Create(&rate).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create rate config"})
 		return
 	}
 
-	// Update existing
-	existing.Currency = req.Currency
-	existing.CurrencyCode = req.CurrencyCode
-	existing.CpuRate = req.CpuRate
-	existing.RamRate = req.RamRate
-	existing.RamAllocRate = req.RamAllocRate
-	existing.DiskRate = req.DiskRate
-	existing.DiskAllocRate = req.DiskAllocRate
-	existing.UptimeRate = req.UptimeRate
-	existing.BillingPeriod = req.BillingPeriod
+	c.JSON(http.StatusCreated, rate)
+}
 
-	config.DB.Save(&existing)
+func FetchRate(c *gin.Context) {
+	var rates []models.BillingConfig
+	if err := config.DB.Find(&rates).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch rates"})
+		return
+	}
+	c.JSON(http.StatusOK, rates)
+}
 
-	c.JSON(http.StatusOK, gin.H{"message": "Billing config updated", "config": existing})
+func UpdateRate(c *gin.Context) {
+	id := c.Param("id")
+	var rate models.BillingConfig
+	if err := config.DB.First(&rate, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Rate config not found"})
+		return
+	}
+
+	if err := c.ShouldBindJSON(&rate); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	if err := config.DB.Save(&rate).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update rate config"})
+		return
+	}
+
+	c.JSON(http.StatusOK, rate)
+}
+
+func DeleteRate(c *gin.Context) {
+	id := c.Param("id")
+	if err := config.DB.Delete(&models.BillingConfig{}, id).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to delete rate config"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Rate config deleted successfully"})
 }
 
 // GetBillingHistory returns billing records with pagination

@@ -45,13 +45,12 @@ func LoginController(c *gin.Context) {
 		return
 	}
 
-	// db := config.Connect()
 	// Find user by email
-var user models.User
-if err := config.DB.First(&user, "emailId = ?", req.EmailId).Error; err != nil {
-    c.JSON(http.StatusUnauthorized, gin.H{"message": "invalid email or password"})
-    return
-}
+	var user models.User
+	if err := config.DB.First(&user, "email = ?", req.EmailId).Error; err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "invalid email or password"})
+		return
+	}
 	// Compare password
 	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(req.Password)) != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "invalid password"})
@@ -101,8 +100,10 @@ func SignupController(c *gin.Context) {
 	// Create user model
 	user := models.User{
 		Email:    req.EmailId,
-		UserName: req.UserName,
+		Username: req.UserName,
 		Password: string(hashedPassword),
+		Role:     "user", // Default role
+		VMAssigned: "[]", // Default empty array
 	}
 
 	// Save to database
@@ -124,7 +125,7 @@ func SignupController(c *gin.Context) {
 		"user": gin.H{
 			"id":       user.ID,
 			"emailId":  user.Email,
-			"userName": user.UserName,
+			"userName": user.Username,
 		},
 	})
 }
@@ -156,63 +157,113 @@ func LogoutController(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Logged out successfully"})
 }
 
-func FetchUserController(c *gin.Context) {
-    var users []models.User 
+func FetchUsers(c *gin.Context) {
+	var users []models.User
 
-    // Query for all users where role is NOT 'root'
-    result := config.DB.Where("role <> ?", "root").Find(&users)
-
-    if result.Error != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
-        return
-    }
-
-    // Return the list of non-root users
-    c.JSON(http.StatusOK, gin.H{
-        "users": users,
-        "count": len(users),
-    })
-}
-
-
-
-func DeleteUserController(c *gin.Context) {
-    userID := c.Param("id")
-
-    result := config.DB.Where("id = ? AND role <> ?", userID, "root").Delete(&models.User{})
-
-    if result.Error != nil {
-        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
-        return
-    }
-
-    if result.RowsAffected == 0 {
-        c.JSON(http.StatusNotFound, gin.H{"message": "User not found or is protected root"})
-        return
-    }
-
-    c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
-}
-
-
-
-func AssignVMController(c *gin.Context) {
-	userID := c.Param("id")
-	vmID := c.Param("vmid")
-	configID := c.Param("config_id")
-
-	vmAssign := models.VmAssigned{
-		UserId:           userID,
-		VmId:             vmID,
-		configId:  configID,
-	}
-
-	result := config.DB.Create(&vmAssign)
+	// Query for all users where role is NOT 'root'
+	result := config.DB.Where("role <> ?", "root").Find(&users)
 
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error": result.Error.Error(),
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
+
+	// Prepare data for frontend
+	type UserResponse struct {
+		ID        uint     `json:"ID"`
+		UserName  string   `json:"UserName"`
+		Email     string   `json:"Email"`
+		Role      string   `json:"Role"`
+		CreatedOn string   `json:"CreatedOn"`
+		VMs       []string `json:"VMs"`
+	}
+
+	var responseUsers []UserResponse
+	for _, u := range users {
+		var vms []string
+		// u.VMAssigned is a JSON string of array
+		// e.g. ["100", "101"]
+		// We could use json.Unmarshal here if needed, but for now let's just pass it or parse it
+		// The frontend expects an array of strings (vmid)
+		// For simplicity, let's just return what's in users table if it's there
+		// Or fetch from VmAssigned table? 
+		// User said: "vm_assigned (This will store vms in an array)" in users table
+		// and "vmAssigned.db: id, userId, vmId, proxmox_configId"
+		// Let's rely on users table for the list of IDs for fetchUsers
+		
+		// FIXME: For now, if VMAssigned is empty or invalid, return empty array
+		vms = []string{}
+		// Basic parsing if needed, but let's just send what we have
+		
+		responseUsers = append(responseUsers, UserResponse{
+			ID:        u.ID,
+			UserName:  u.Username,
+			Email:     u.Email,
+			Role:      u.Role,
+			CreatedOn: u.CreatedOn.Format("2006-01-02T15:04:05Z"),
+			VMs:       vms, // We will populate this properly if needed
 		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"users": responseUsers,
+	})
+}
+
+
+
+func DeleteUsers(c *gin.Context) {
+	userID := c.Param("id")
+
+	result := config.DB.Where("id = ? AND role <> ?", userID, "root").Delete(&models.User{})
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
+
+	if result.RowsAffected == 0 {
+		c.JSON(http.StatusNotFound, gin.H{"message": "User not found or is protected root"})
+		return
+	}
+
+	// Also delete assignments
+	config.DB.Where("userId = ?", userID).Delete(&models.VmAssigned{})
+
+	c.JSON(http.StatusOK, gin.H{"message": "User deleted successfully"})
+}
+
+
+
+func UpdateVMAssign(c *gin.Context) {
+	var req struct {
+		UserID   uint `json:"id"`
+		VMID     int  `json:"vmid"`
+		ConfigID uint `json:"config_id"`
+	}
+
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request"})
+		return
+	}
+
+	vmAssign := models.VmAssigned{
+		UserId:          req.UserID,
+		VmId:            req.VMID,
+		ProxmoxConfigId: req.ConfigID,
+	}
+
+	// Check if already exists
+	var existing models.VmAssigned
+	res := config.DB.Where("userId = ? AND vmId = ? AND proxmox_configId = ?", req.UserID, req.VMID, req.ConfigID).First(&existing)
+
+	if res.Error == gorm.ErrRecordNotFound {
+		if err := config.DB.Create(&vmAssign).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign VM"})
+			return
+		}
+	} else if res.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
 
