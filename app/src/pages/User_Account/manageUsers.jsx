@@ -1,59 +1,24 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../services/api";
 import { Trash2, Edit3, Search, User, Mail, Shield, X } from "lucide-react";
 import { toast } from "react-toastify";
 
 const ViewUsersPage = () => {
   const nodeName = "pve";
-  // const [users, setUsers] = useState([
-  //   {
-  //     id: "u123",
-  //     name: "John Doe",
-  //     email: "john.doe@example.com",
-  //     role: "admin",
-  //     created_on: "2024-03-15T10:00:00Z",
-  //     vms: ["100", "101"],
-  //   },
-  //   {
-  //     id: "u124",
-  //     name: "Jane Smith",
-  //     email: "jane.smith@student.in",
-  //     role: "user",
-  //     created_on: "2024-03-20T14:30:00Z",
-  //     vms: [],
-  //   },
-  // ]);
-
   const [users, setUsers] = useState([]);
-
-  // 🔹 Mock VM list
-  // const [vmList] = useState([
-  //   { id: "vm1", name: "Ubuntu Server" },
-  //   { id: "vm2", name: "Windows 11" },
-  //   { id: "vm3", name: "Kali Linux" },
-  //   { id: "vm4", name: "Arch Linux" },
-  //   { id: "vm5", name: "Mint Linux" },
-  //   { id: "vm6", name: "Debian Linux" },
-  //   { id: "vm7", name: "Zorin Linux" },
-  //   { id: "vm8", name: "Mac Linux" },
-  // ]);
 
   const [vmList, setVmList] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [selectedVMs, setSelectedVMs] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [fetchedVMs, setFetchedVMs] = useState([]);
 
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
   const fetchVMs = async () => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_admin_server}/api/proxmox/fetchNodeStats/${nodeName}`,
-        { withCredentials: true },
-      );
-
-      console.log("fetchVMs", res);
+      const res = await api.get(`/api/proxmox/fetchNodeStats/${nodeName}`);
 
       const formattedVMs = res?.data.map((vm) => ({
         id: vm.vmid.toString(),
@@ -68,12 +33,7 @@ const ViewUsersPage = () => {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_admin_server}/api/get-users`,
-        { withCredentials: true },
-      );
-
-      console.log("Get Users", res.data.users);
+      const res = await api.get("/api/get-users");
 
       const formattedUsers = res.data.users.map((u) => ({
         id: u.ID,
@@ -90,30 +50,46 @@ const ViewUsersPage = () => {
     }
   };
 
-  useEffect(() => {
-    fetchUsers();
-    fetchVMs();
-  }, []);
-
-  const deleteUsers = async () => {
+  const fetchAssignedVM = async () => {
     try {
-      const res = await axios.delete(
-        `${import.meta.env.VITE_admin_server}/api/delete-users`,
-        { withCredentials: true },
-      );
+      const res = await api.get("/api/fetch-vm-assign");
+      console.log("fetchAssignedVM", res.data.vms);
+      setFetchedVMs(res.data.vms);
     } catch (err) {
-      console.error("Failed to Delete Users", err);
+      console.error("Failed to fetch Users", err);
     }
   };
 
-  const updateVMAssign = async () => {
+  useEffect(() => {
+    fetchUsers();
+    fetchVMs();
+    fetchAssignedVM();
+  }, []);
+
+  const deleteUsers = async (id) => {
     try {
-      const res = await axios.patch(
-        `${import.meta.env.VITE_admin_server}/api/update-vm-assign`,
-        { withCredentials: true },
-      );
+      const res = await api.delete(`/api/delete-users/${id}`);
+      toast.success(res.data.message || "User deleted successfully");
+      fetchUsers();
     } catch (err) {
       console.error("Failed to Delete Users", err);
+      toast.error(err.response?.data?.error || "Failed to delete user");
+    }
+  };
+
+  const updateVMAssign = async (userId, vmIds, configId = 1) => {
+    console.log("updateVMAssign", userId, vmIds, configId);
+    try {
+      const res = await api.post("/api/update-vm-assign", {
+        id: userId,
+        vmids: vmIds.map((id) => parseInt(id)),
+        config_id: configId,
+      });
+      return res.data;
+    } catch (err) {
+      console.error("Failed to Update VM Assignment", err);
+      toast.error(`Failed to assign VM ${vmId}`);
+      throw err;
     }
   };
 
@@ -132,28 +108,25 @@ const ViewUsersPage = () => {
   };
 
   // 🔹 Save assignment
-  const handleSaveVMs = () => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === selectedUser.id ? { ...u, vms: selectedVMs } : u,
-      ),
-    );
+  const handleSaveVMs = async () => {
+    setLoading(true);
+    try {
+      await updateVMAssign(selectedUser.id, selectedVMs);
 
-    toast.success("VM assignment updated");
-    setIsModalOpen(false);
+      toast.success("VM assignments updated");
+      setIsModalOpen(false);
+      fetchUsers();
+    } catch (err) {
+      // Error handled in updateVMAssign
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleDelete = async (userId) => {
     if (!window.confirm("Are you sure you want to delete this user?")) return;
-    setUsers((prev) => prev.filter((u) => u.id !== userId));
-    toast.success("User deleted successfully");
+    await deleteUsers(userId);
   };
-
-  // const filteredUsers = users?.filter(
-  //   (u) =>
-  //     u.name?.toLowerCase().includes(search.toLowerCase()) ||
-  //     u.email?.toLowerCase().includes(search.toLowerCase()),
-  // );
 
   const filteredUsers = Array.isArray(users)
     ? users.filter(
@@ -222,16 +195,24 @@ const ViewUsersPage = () => {
                       <div>
                         <div className="font-medium">{u.name}</div>
                         <div className="text-sm text-gray-500 flex gap-1">
-                          <Mail size={12} /> {u.email}
+                          <Mail className="mt-1" size={12} /> {u.email}
                         </div>
                       </div>
                     </div>
                   </td>
 
                   <td className="px-6 py-4 text-sm text-gray-600">
+                    {/* {console.log("fetchedVMs", fetchedVMs)}
+                    {console.log("vmList", vmList)}
+                    {console.log("u", u)} */}
                     {u.vms?.length
                       ? u.vms
-                          .map((id) => vmList.find((v) => v.id === id)?.name)
+                          .map(
+                            (vmid) =>
+                              vmList.find((v) => Number(v.id) === vmid)
+                                ?.name,
+                          )
+                          .filter(Boolean)
                           .join(", ")
                       : "None"}
                   </td>
@@ -257,7 +238,6 @@ const ViewUsersPage = () => {
         )}
       </div>
 
-      {/* 🔥 Modal */}
       {isModalOpen && (
         <div className="fixed inset-0 bg-black/30 flex items-center justify-center z-50">
           <div className="bg-white w-full max-w-md rounded-xl shadow-lg p-6">
@@ -271,7 +251,6 @@ const ViewUsersPage = () => {
               </button>
             </div>
 
-            {/* 🔍 Search Input */}
             <div className="mb-3">
               <input
                 type="text"
@@ -282,7 +261,6 @@ const ViewUsersPage = () => {
               />
             </div>
 
-            {/* ✅ Selected VM Chips */}
             <div className="flex flex-wrap gap-2 mb-4">
               {selectedVMs.map((vmId) => {
                 const vm = vmList.find((v) => v.id === vmId);
@@ -303,7 +281,6 @@ const ViewUsersPage = () => {
               })}
             </div>
 
-            {/* 📜 Dropdown List */}
             <div className="border border-gray-200 rounded-lg max-h-48 overflow-y-auto">
               {vmList
                 .filter((vm) =>

@@ -11,7 +11,7 @@ const NavBar = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
-  console.log("From Navbar", user);
+  // console.log("From Navbar", user);
 
   // useEffect(() => {
   //   if (!user?.ID) {

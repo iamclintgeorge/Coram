@@ -1,33 +1,48 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Trash2, Terminal, Cpu, HardDrive } from "lucide-react";
+import api from "../../services/api";
+import { toast } from "react-toastify";
 
 const ViewOrdersPage = () => {
-  const [orders, setOrders] = useState([
-    {
-      id: "o1",
-      vmName: "prod-server-1",
-      template: "Ubuntu 22.04 LTS (Small)",
-      specs: "2 vCPU, 4GB RAM",
-      remark: "Production workload",
-      status: "pending",
-      created_on: "2024-04-01",
-    },
-    {
-      id: "o2",
-      vmName: "dev-testing",
-      template: "Debian 12 (Medium)",
-      specs: "4 vCPU, 8GB RAM",
-      remark: "Testing APIs",
-      status: "approved",
-      created_on: "2024-04-02",
-    },
-  ]);
+  const [orders, setOrders] = useState([]);
+  const [templates, setTemplates] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [selectedOrder, setSelectedOrder] = useState(null); // modal state
 
-  const handleDelete = (id) => {
+  useEffect(() => {
+    const init = async () => {
+      await fetchTemplates();
+      await fetchOrder();
+    };
+    init();
+  }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      const res = await api.get("/api/order/fetch-template");
+      const formatted = res.data.map((t) => {
+        let resourceData = {};
+        try {
+          resourceData = JSON.parse(t.resource);
+        } catch (e) {
+          console.error("Failed to parse resource JSON", t.resource);
+        }
+        return {
+          id: t.id,
+          name: resourceData.name || `Template ${t.id}`,
+          specs: `${resourceData.cpu} vCPU, ${resourceData.ram}GB RAM`,
+        };
+      });
+      setTemplates(formatted);
+    } catch (err) {
+      console.error("Failed to fetch Templates", err);
+    }
+  };
+
+  const handleDelete = async (id) => {
     if (!window.confirm("Delete this order?")) return;
-    setOrders((prev) => prev.filter((o) => o.id !== id));
+    await deleteOrder(id);
   };
 
   const getStatusStyle = (status) => {
@@ -42,35 +57,37 @@ const ViewOrdersPage = () => {
   };
 
   const fetchOrder = async () => {
+    setLoading(true);
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_admin_server}/api/order/fetch-order`,
-        { withCredentials: true },
-      );
+      const res = await api.get("/api/order/fetch-order");
+      setOrders(res.data);
     } catch (err) {
       console.error("Failed to fetch Order", err);
+      toast.error("Failed to load orders");
+    } finally {
+      setLoading(false);
     }
   };
 
-  const updateOrder = async () => {
+  const updateOrder = async (id, updatedData) => {
     try {
-      const res = await axios.patch(
-        `${import.meta.env.VITE_admin_server}/api/order/update-order`,
-        { withCredentials: true },
-      );
+      await api.put(`/api/order/update-order/${id}`, updatedData);
+      toast.success("Order updated successfully");
+      fetchOrder();
     } catch (err) {
       console.error("Failed to Update Order", err);
+      toast.error("Failed to update order");
     }
   };
 
-  const deleteOrder = async () => {
+  const deleteOrder = async (id) => {
     try {
-      const res = await axios.delete(
-        `${import.meta.env.VITE_admin_server}/api/order/delete-order`,
-        { withCredentials: true },
-      );
+      await api.delete(`/api/order/delete-order/${id}`);
+      toast.success("Order deleted successfully");
+      fetchOrder();
     } catch (err) {
       console.error("Failed to Delete Order", err);
+      toast.error("Failed to delete order");
     }
   };
 
@@ -93,78 +110,84 @@ const ViewOrdersPage = () => {
         <div className="text-center text-gray-500 py-16">No orders found.</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {orders.map((order) => (
-            <div
-              key={order.id}
-              className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
-            >
-              {/* Top */}
-              <div className="flex justify-between items-start mb-4">
-                <div className="p-2 bg-gray-50 rounded-lg">
-                  <Terminal className="text-gray-600" size={24} />
-                </div>
+          {orders.map((order) => {
+            const template = templates.find((t) => t.id === order.template_id);
+            const [vmName, ...remarkParts] = order.remark?.split(": ") || ["VM " + order.id];
+            const remarkText = remarkParts.join(": ") || order.remark;
 
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => handleDelete(order.id)}
-                    className="p-1.5 text-gray-400 hover:text-red-500"
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                </div>
-              </div>
-
-              {/* Title */}
-              <h3 className="text-lg font-bold text-gray-900 mb-1">
-                {order.vmName}
-              </h3>
-
-              <p className="text-xs text-gray-400 mb-3 uppercase tracking-wider">
-                Created: {order.created_on}
-              </p>
-
-              {/* Status */}
-              <span
-                className={`inline-block px-2.5 py-0.5 text-xs rounded-full font-medium mb-4 ${getStatusStyle(
-                  order.status,
-                )}`}
+            return (
+              <div
+                key={order.id}
+                className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm hover:shadow-md transition-shadow"
               >
-                {order.status}
-              </span>
-
-              {/* Template Info */}
-              <div className="text-sm text-gray-600 mb-3">
-                <span className="font-medium text-gray-900">
-                  {order.template}
-                </span>
-              </div>
-
-              {/* Resources */}
-              <div className="space-y-3 pt-4 border-t border-gray-100">
-                <div className="flex justify-between text-sm">
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <Cpu size={14} /> CPU / RAM
+                {/* Top */}
+                <div className="flex justify-between items-start mb-4">
+                  <div className="p-2 bg-gray-50 rounded-lg">
+                    <Terminal className="text-gray-600" size={24} />
                   </div>
-                  <span className="font-semibold text-gray-900">
-                    {order.specs}
+
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleDelete(order.id)}
+                      className="p-1.5 text-gray-400 hover:text-red-500"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  </div>
+                </div>
+
+                {/* Title */}
+                <h3 className="text-lg font-bold text-gray-900 mb-1">
+                  {vmName}
+                </h3>
+
+                <p className="text-xs text-gray-400 mb-3 uppercase tracking-wider">
+                  Created: {order.created_on?.split("T")[0]}
+                </p>
+
+                {/* Status */}
+                <span
+                  className={`inline-block px-2.5 py-0.5 text-xs rounded-full font-medium mb-4 ${getStatusStyle(
+                    order.status || "pending",
+                  )}`}
+                >
+                  {order.status || "pending"}
+                </span>
+
+                {/* Template Info */}
+                <div className="text-sm text-gray-600 mb-3">
+                  <span className="font-medium text-gray-900">
+                    {template?.name || "Unknown Template"}
                   </span>
                 </div>
+
+                {/* Resources */}
+                <div className="space-y-3 pt-4 border-t border-gray-100">
+                  <div className="flex justify-between text-sm">
+                    <div className="flex items-center gap-2 text-gray-500">
+                      <Cpu size={14} /> CPU / RAM
+                    </div>
+                    <span className="font-semibold text-gray-900">
+                      {template?.specs || "N/A"}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Remark */}
+                {remarkText && (
+                  <div className="mt-4 text-sm text-gray-500 line-clamp-2">{remarkText}</div>
+                )}
+
+                {/* Footer */}
+                <button
+                  onClick={() => setSelectedOrder({ ...order, vmName, template: template?.name, specs: template?.specs, remarkText })}
+                  className="w-full mt-6 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
+                >
+                  View Details
+                </button>
               </div>
-
-              {/* Remark */}
-              {order.remark && (
-                <div className="mt-4 text-sm text-gray-500">{order.remark}</div>
-              )}
-
-              {/* Footer */}
-              <button
-                onClick={() => setSelectedOrder(order)}
-                className="w-full mt-6 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                View Details
-              </button>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -185,27 +208,27 @@ const ViewOrdersPage = () => {
 
             <div className="space-y-2 text-sm text-gray-700">
               <div>
-                <strong>Template:</strong> {selectedOrder.template}
+                <strong>Template:</strong> {selectedOrder.template || "Unknown"}
               </div>
               <div>
-                <strong>Specs:</strong> {selectedOrder.specs}
+                <strong>Specs:</strong> {selectedOrder.specs || "N/A"}
               </div>
               <div>
                 <strong>Status:</strong>{" "}
                 <span
                   className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getStatusStyle(
-                    selectedOrder.status,
+                    selectedOrder.status || "pending",
                   )}`}
                 >
-                  {selectedOrder.status}
+                  {selectedOrder.status || "pending"}
                 </span>
               </div>
               <div>
-                <strong>Created On:</strong> {selectedOrder.created_on}
+                <strong>Created On:</strong> {selectedOrder.created_on?.split("T")[0]}
               </div>
-              {selectedOrder.remark && (
+              {selectedOrder.remarkText && (
                 <div>
-                  <strong>Remark:</strong> {selectedOrder.remark}
+                  <strong>Remark:</strong> {selectedOrder.remarkText}
                 </div>
               )}
             </div>

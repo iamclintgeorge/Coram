@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Save, Terminal, Cpu, HardDrive, Layout } from "lucide-react";
+import api from "../../services/api";
+import { toast } from "react-toastify";
 
 const OrderVM = () => {
   const [loading, setLoading] = useState(false);
@@ -9,29 +11,65 @@ const OrderVM = () => {
     remark: "",
   });
 
-  // Sample templates based on your templates.db structure
-  const templates = [
-    { id: "t1", name: "Ubuntu 22.04 LTS (Small)", specs: "2 vCPU, 4GB RAM" },
-    { id: "t2", name: "Debian 12 (Medium)", specs: "4 vCPU, 8GB RAM" },
-    { id: "t3", name: "CentOS Stream 9 (Large)", specs: "8 vCPU, 16GB RAM" },
-  ];
+  const [templates, setTemplates] = useState([]);
+  const [orders, setOrders] = useState([]);
 
-  const [orders, setOrders] = useState([
-    {
-      id: "o1",
-      vmName: "prod-server",
-      template: "Ubuntu 22.04 LTS (Small)",
-      specs: "2 vCPU, 4GB RAM",
-      status: "pending",
-      created_on: "2024-04-01",
-    },
-  ]);
+  useEffect(() => {
+    fetchTemplates();
+    fetchOrders();
+  }, []);
 
-  const handleOrder = (e) => {
+  const fetchTemplates = async () => {
+    try {
+      const res = await api.get("/api/order/fetch-template");
+      const formatted = res.data.map((t) => {
+        let resourceData = {};
+        try {
+          resourceData = JSON.parse(t.resource);
+        } catch (e) {
+          console.error("Failed to parse resource JSON", t.resource);
+        }
+        return {
+          id: t.id,
+          name: resourceData.name || `Template ${t.id}`,
+          specs: `${resourceData.cpu} vCPU, ${resourceData.ram}GB RAM, ${resourceData.disk}GB Disk`,
+        };
+      });
+      setTemplates(formatted);
+    } catch (err) {
+      console.error("Failed to fetch Templates", err);
+    }
+  };
+
+  const fetchOrders = async () => {
+    try {
+      const res = await api.get("/api/order/fetch-order");
+      setOrders(res.data);
+    } catch (err) {
+      console.error("Failed to fetch Orders", err);
+    }
+  };
+
+  const handleOrder = async (e) => {
     e.preventDefault();
+    if (!formData.templateId || !formData.vmName) {
+      toast.error("Please fill in required fields");
+      return;
+    }
     setLoading(true);
-    // Logic to insert into vmOrders.db goes here
-    setTimeout(() => setLoading(false), 1000);
+    try {
+      await createOrder({
+        template_id: parseInt(formData.templateId),
+        remark: `${formData.vmName}: ${formData.remark}`,
+      });
+      toast.success("Order placed successfully!");
+      setFormData({ templateId: "", vmName: "", remark: "" });
+      fetchOrders();
+    } catch (err) {
+      // Error handled in createOrder
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getStatusStyle = (status) => {
@@ -45,14 +83,14 @@ const OrderVM = () => {
     }
   };
 
-  const createOrder = async () => {
+  const createOrder = async (orderData) => {
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_admin_server}/api/order/create-order`,
-        { withCredentials: true },
-      );
+      const res = await api.post("/api/order/create-order", orderData);
+      return res.data;
     } catch (err) {
-      console.error("Failed to Create Template", err);
+      console.error("Failed to Create Order", err);
+      toast.error("Failed to place order");
+      throw err;
     }
   };
 
@@ -177,39 +215,45 @@ const OrderVM = () => {
           <div className="text-gray-500 text-sm">No orders placed yet.</div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {orders.map((order) => (
-              <div
-                key={order.id}
-                className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
-              >
-                <div className="flex justify-between items-center mb-2">
-                  <h3 className="font-semibold text-gray-900">
-                    {order.vmName}
-                  </h3>
+            {orders.map((order) => {
+              const template = templates.find((t) => t.id === order.template_id);
+              // Extract VM name from remark if we stored it as "Name: Remark"
+              const [vmName, ...remarkParts] = order.remark?.split(": ") || ["VM " + order.id];
+              
+              return (
+                <div
+                  key={order.id}
+                  className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm"
+                >
+                  <div className="flex justify-between items-center mb-2">
+                    <h3 className="font-semibold text-gray-900">
+                      {vmName}
+                    </h3>
 
-                  <span
-                    className={`px-2 py-0.5 text-xs rounded-full ${getStatusStyle(
-                      order.status,
-                    )}`}
-                  >
-                    {order.status}
-                  </span>
-                </div>
-
-                <p className="text-sm text-gray-500 mb-1">{order.template}</p>
-
-                <div className="flex items-center justify-between text-sm text-gray-600">
-                  <div className="flex items-center gap-1">
-                    <Cpu size={14} />
-                    {order.specs}
+                    <span
+                      className={`px-2 py-0.5 text-xs rounded-full ${getStatusStyle(
+                        order.status || "pending"
+                      )}`}
+                    >
+                      {order.status || "pending"}
+                    </span>
                   </div>
 
-                  <span className="text-xs text-gray-400">
-                    {order.created_on}
-                  </span>
+                  <p className="text-sm text-gray-500 mb-1">{template?.name || "Unknown Template"}</p>
+
+                  <div className="flex items-center justify-between text-sm text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <Cpu size={14} />
+                      {template?.specs || "Specs N/A"}
+                    </div>
+
+                    <span className="text-xs text-gray-400">
+                      {order.created_on?.split("T")[0]}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>

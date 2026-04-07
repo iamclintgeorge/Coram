@@ -19,4 +19,5 @@ func UserRoutes(rg *gin.RouterGroup) {
 	rg.GET("/get-users", controllers.FetchUsers)
 	rg.DELETE("/delete-users/:id", controllers.DeleteUsers)
 	rg.POST("/update-vm-assign", controllers.UpdateVMAssign)
+	rg.GET("/fetch-vm-assign", controllers.FetchVMs)
 }

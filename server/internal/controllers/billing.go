@@ -98,3 +98,28 @@ func GetBillingHistory(c *gin.Context) {
 		"limit":   limit,
 	})
 }
+
+func UpdateBillStatus(c *gin.Context) {
+	id := c.Param("id")
+	var record models.BillingRecord
+	if err := config.DB.First(&record, id).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Billing record not found"})
+		return
+	}
+
+	var req struct {
+		Status string `json:"status"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request body"})
+		return
+	}
+
+	record.Status = req.Status
+	if err := config.DB.Save(&record).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update record"})
+		return
+	}
+
+	c.JSON(http.StatusOK, record)
+}

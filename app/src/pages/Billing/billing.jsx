@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../../services/api";
 import { toast } from "react-toastify";
 import {
   Server,
@@ -37,34 +37,15 @@ const Billing = () => {
   useEffect(() => {
     const fetchNode = async () => {
       try {
-        const res = await axios.get(
-          `${import.meta.env.VITE_admin_server}/api/proxmox/nodes`,
-          {
-            withCredentials: true,
-          },
-        );
-        if (res.data && res.data.length > 0) {
-          const name = res.data[0].node_name;
+        const res = await api.get("/api/proxmox/get-config");
+        if (res.data?.nodes && res.data.nodes.length > 0) {
+          const name = res.data.nodes[0].node_name;
           setNodeName(name);
           localStorage.setItem("coram_node_name", name);
           return;
         }
       } catch (err) {
         console.error("Failed to fetch registered nodes", err);
-      }
-
-      try {
-        const fallbackRes = await axios.get(
-          `${import.meta.env.VITE_admin_server}/api/proxmox/cluster/nodes`,
-          { withCredentials: true },
-        );
-        if (fallbackRes.data && fallbackRes.data.length > 0) {
-          const name = fallbackRes.data[0].node;
-          setNodeName(name);
-          localStorage.setItem("coram_node_name", name);
-        }
-      } catch (err) {
-        console.error("Failed to fetch cluster nodes", err);
       }
     };
 
@@ -75,21 +56,23 @@ const Billing = () => {
   useEffect(() => {
     const fetchConfig = async () => {
       try {
-        const response = await axios.get(
-          `${import.meta.env.VITE_admin_server}/api/billing/config`,
-          { withCredentials: true },
-        );
-        setBillingConfig(response.data);
+        const response = await api.get("/api/billing/fetch-config");
+        // Use the first config as default
+        if (response.data && response.data.length > 0) {
+          setBillingConfig(response.data[0]);
+        } else {
+          setBillingConfig({
+            currency: "₹",
+            cpu_rate: 0.05,
+            ram_rate: 0.002,
+            ram_alloc_rate: 0.002,
+            disk_rate: 0.001,
+            disk_alloc_rate: 0.001,
+            uptime_rate: 0.01,
+          });
+        }
       } catch (err) {
-        setBillingConfig({
-          currency: "₹",
-          cpu_rate: 0.05,
-          ram_rate: 0.002,
-          ram_alloc_rate: 0.002,
-          disk_rate: 0.001,
-          disk_alloc_rate: 0.001,
-          uptime_rate: 0.01,
-        });
+        toast.error("Failed to fetch billing configuration");
       }
     };
     fetchConfig();
@@ -99,11 +82,18 @@ const Billing = () => {
   const fetchInvoices = async () => {
     setInvoicesLoading(true);
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_admin_server}/api/billing/invoices`,
-        { withCredentials: true },
-      );
-      setInvoices(response.data?.invoices || []);
+      const response = await api.get("/api/billing/fetch-invoice");
+      // Map backend BillingRecord to frontend invoice structure
+      const formattedInvoices = (response.data || []).map((rec) => ({
+        id: rec.id,
+        vm_id: rec.vm_id,
+        period_start: rec.start_date,
+        period_end: rec.end_date,
+        total_amount: rec.total_cost,
+        status: rec.status,
+        vm_name: "VM " + rec.vm_id, // Could be parsed from VmDetail
+      }));
+      setInvoices(formattedInvoices);
     } catch (err) {
       console.error("Error fetching invoices:", err);
     } finally {
@@ -118,10 +108,7 @@ const Billing = () => {
   // Fetch live stats
   const fetchStats = async () => {
     if (!nodeName) return null;
-    const response = await axios.get(
-      `${import.meta.env.VITE_admin_server}/api/proxmox/fetchNodeStats/${nodeName}`,
-      { withCredentials: true },
-    );
+    const response = await api.get(`/api/proxmox/fetchNodeStats/${nodeName}`);
     return response.data;
   };
 
@@ -131,17 +118,6 @@ const Billing = () => {
     lastUpdated,
     refresh,
   } = usePolling(fetchStats, POLL_INTERVAL);
-
-  const fetchInvoice = async () => {
-    try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_admin_server}/api/billing/fetch-invoice`,
-        { withCredentials: true },
-      );
-    } catch (err) {
-      console.error("Failed to fetch Invoice", err);
-    }
-  };
 
   const calculateCharges = (vm) => {
     if (!billingConfig) return null;
@@ -201,11 +177,9 @@ const Billing = () => {
   const handleMarkAsPaid = async (invoiceId) => {
     setPayingId(invoiceId);
     try {
-      await axios.put(
-        `${import.meta.env.VITE_admin_server}/api/billing/invoices/${invoiceId}/pay`,
-        {},
-        { withCredentials: true },
-      );
+      await api.put(`/api/billing/update-invoice/${invoiceId}`, {
+        status: "paid",
+      });
       toast.success("Invoice marked as paid");
       fetchInvoices();
     } catch (err) {

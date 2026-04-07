@@ -1,22 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Trash2, Server, Cpu, HardDrive } from "lucide-react";
-import axios from "axios";
+import api from "../services/api";
+import { toast } from "react-toastify";
 
 const TemplatePage = () => {
-  const [templates, setTemplates] = useState([
-    {
-      id: 1,
-      name: "Standard Ubuntu",
-      resources: { cpu: 2, ram: 4, disk: 40 },
-      created_on: "2023-10-01",
-    },
-    {
-      id: 2,
-      name: "High Perf Node",
-      resources: { cpu: 8, ram: 16, disk: 100 },
-      created_on: "2023-10-05",
-    },
-  ]);
+  const [templates, setTemplates] = useState([]);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingTemplate, setEditingTemplate] = useState(null);
@@ -28,47 +16,69 @@ const TemplatePage = () => {
     disk: "",
   });
 
-  const createTemplate = async () => {
+  useEffect(() => {
+    fetchTemplate();
+  }, []);
+
+  const createTemplate = async (templateData) => {
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_admin_server}/api/order/create-template`,
-        { withCredentials: true },
-      );
+      await api.post("/api/order/create-template", templateData);
+      toast.success("Template created successfully");
+      fetchTemplate();
     } catch (err) {
       console.error("Failed to Create Template", err);
+      toast.error("Failed to create template");
     }
   };
 
   const fetchTemplate = async () => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_admin_server}/api/order/fetch-template`,
-        { withCredentials: true },
-      );
+      const res = await api.get("/api/order/fetch-template");
+      // Map backend Template to frontend format
+      const formatted = res.data.map((t) => {
+        let resourceData = {};
+        try {
+          resourceData = JSON.parse(t.resource);
+        } catch (e) {
+          console.error("Failed to parse resource JSON", t.resource);
+        }
+        return {
+          id: t.id,
+          name: resourceData.name || `Template ${t.id}`,
+          resources: {
+            cpu: resourceData.cpu || 0,
+            ram: resourceData.ram || 0,
+            disk: resourceData.disk || 0,
+          },
+          created_on: t.created_on?.split("T")[0] || "N/A",
+        };
+      });
+      setTemplates(formatted);
     } catch (err) {
       console.error("Failed to fetch Template", err);
+      toast.error("Failed to load templates");
     }
   };
 
-  const updateTemplate = async () => {
+  const updateTemplate = async (id, templateData) => {
     try {
-      const res = await axios.patch(
-        `${import.meta.env.VITE_admin_server}/api/order/update-template`,
-        { withCredentials: true },
-      );
+      await api.put(`/api/order/update-template/${id}`, templateData);
+      toast.success("Template updated successfully");
+      fetchTemplate();
     } catch (err) {
       console.error("Failed to Update Template", err);
+      toast.error("Failed to update template");
     }
   };
 
-  const deleteTemplate = async () => {
+  const deleteTemplate = async (id) => {
     try {
-      const res = await axios.delete(
-        `${import.meta.env.VITE_admin_server}/api/order/delete-template`,
-        { withCredentials: true },
-      );
+      await api.delete(`/api/order/delete-template/${id}`);
+      toast.success("Template deleted successfully");
+      fetchTemplate();
     } catch (err) {
       console.error("Failed to Delete Template", err);
+      toast.error("Failed to delete template");
     }
   };
 
@@ -92,47 +102,32 @@ const TemplatePage = () => {
   };
 
   // 🔹 Save (Create + Edit)
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!form.name || !form.cpu || !form.ram || !form.disk) return;
 
-    if (editingTemplate) {
-      setTemplates((prev) =>
-        prev.map((t) =>
-          t.id === editingTemplate.id
-            ? {
-                ...t,
-                name: form.name,
-                resources: {
-                  cpu: Number(form.cpu),
-                  ram: Number(form.ram),
-                  disk: Number(form.disk),
-                },
-              }
-            : t,
-        ),
-      );
-    } else {
-      const newTemplate = {
-        id: Date.now(),
+    const payload = {
+      resource: JSON.stringify({
         name: form.name,
-        created_on: new Date().toISOString().split("T")[0],
-        resources: {
-          cpu: Number(form.cpu),
-          ram: Number(form.ram),
-          disk: Number(form.disk),
-        },
-      };
+        cpu: Number(form.cpu),
+        ram: Number(form.ram),
+        disk: Number(form.disk),
+      }),
+      billing_config_id: 1, // Default or selected
+    };
 
-      setTemplates((prev) => [...prev, newTemplate]);
+    if (editingTemplate) {
+      await updateTemplate(editingTemplate.id, payload);
+    } else {
+      await createTemplate(payload);
     }
 
     setIsModalOpen(false);
   };
 
   // 🔹 Delete
-  const handleDelete = (id) => {
+  const handleDelete = async (id) => {
     if (!window.confirm("Delete this template?")) return;
-    setTemplates((prev) => prev.filter((t) => t.id !== id));
+    await deleteTemplate(id);
   };
 
   return (

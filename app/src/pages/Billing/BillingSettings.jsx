@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import api from "../../services/api";
 import { toast } from "react-toastify";
 import { Save, RotateCcw } from "lucide-react";
 
@@ -18,48 +19,6 @@ const BILLING_PERIODS = [
   { value: "monthly", label: "Monthly" },
 ];
 
-// MOCK DATA FOR DEMO
-const MOCK_RATE_CARDS = [
-  {
-    id: 1,
-    name: "Default INR Card",
-    currency: "₹",
-    currency_code: "INR",
-    billing_period: "hourly",
-    cpu_rate: 0.05,
-    ram_rate: 0.002,
-    ram_alloc_rate: 0.002,
-    disk_rate: 0.001,
-    disk_alloc_rate: 0.001,
-    uptime_rate: 0.01,
-  },
-  {
-    id: 2,
-    name: "USD Daily Plan",
-    currency: "$",
-    currency_code: "USD",
-    billing_period: "daily",
-    cpu_rate: 0.06,
-    ram_rate: 0.003,
-    ram_alloc_rate: 0.003,
-    disk_rate: 0.002,
-    disk_alloc_rate: 0.002,
-    uptime_rate: 0.015,
-  },
-  {
-    id: 3,
-    name: "Euro Monthly Card",
-    currency: "€",
-    currency_code: "EUR",
-    billing_period: "monthly",
-    cpu_rate: 0.04,
-    ram_rate: 0.0025,
-    ram_alloc_rate: 0.0025,
-    disk_rate: 0.0015,
-    disk_alloc_rate: 0.0015,
-    uptime_rate: 0.012,
-  },
-];
 
 const BillingSettings = () => {
   const [config, setConfig] = useState(null);
@@ -68,8 +27,7 @@ const BillingSettings = () => {
   const [creatingNew, setCreatingNew] = useState(false);
 
   useEffect(() => {
-    // For mockup/demo, we use mock data instead of fetching from API
-    setRateCards(MOCK_RATE_CARDS);
+    fetchBillingConfig();
   }, []);
 
   const handleCreateNew = () => {
@@ -90,72 +48,85 @@ const BillingSettings = () => {
     toast.info("New rate card initialized — configure and save");
   };
 
-  const createBillingConfig = async () => {
+  const createBillingConfig = async (configData) => {
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_admin_server}/api/billing/create-config`,
-        { withCredentials: true },
-      );
+      setSaving(true);
+      await api.post("/api/billing/create-config", configData);
+      toast.success("New rate card created!");
+      fetchBillingConfig();
+      setCreatingNew(false);
+      setConfig(null);
     } catch (err) {
       console.error("Failed to Create BillingConfig", err);
+      toast.error("Failed to create billing configuration");
+    } finally {
+      setSaving(false);
     }
   };
 
   const fetchBillingConfig = async () => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_admin_server}/api/billing/fetch-config`,
-        { withCredentials: true },
-      );
+      const res = await api.get("/api/billing/fetch-config");
+      // Map currency based on currency_code if symbol is missing
+      const formatted = (res.data || []).map(card => ({
+        ...card,
+        currency: CURRENCIES.find(c => c.code === card.currency_code)?.symbol || "₹"
+      }));
+      setRateCards(formatted);
     } catch (err) {
       console.error("Failed to fetch BillingConfig", err);
+      toast.error("Failed to load billing configurations");
     }
   };
 
-  const updateBillingConfig = async () => {
+  const updateBillingConfig = async (id, configData) => {
     try {
-      const res = await axios.patch(
-        `${import.meta.env.VITE_admin_server}/api/billing/update-config`,
-        { withCredentials: true },
-      );
+      setSaving(true);
+      await api.put(`/api/billing/update-config/${id}`, configData);
+      toast.success("Rate card updated!");
+      fetchBillingConfig();
+      setCreatingNew(false);
+      setConfig(null);
     } catch (err) {
       console.error("Failed to Update BillingConfig", err);
+      toast.error("Failed to update configuration");
+    } finally {
+      setSaving(false);
     }
   };
 
-  const deleteBillingConfig = async () => {
+  const deleteBillingConfig = async (id) => {
     try {
-      const res = await axios.delete(
-        `${import.meta.env.VITE_admin_server}/api/billing/delete-config`,
-        { withCredentials: true },
-      );
+      await api.delete(`/api/billing/delete-config/${id}`);
+      toast.success("Rate card deleted!");
+      fetchBillingConfig();
     } catch (err) {
       console.error("Failed to Delete BillingConfig", err);
+      toast.error("Failed to delete configuration");
     }
   };
 
   const handleSave = () => {
-    if (!config.name) {
-      toast.error("Please enter a Rate Card Name before saving");
-      return;
-    }
+    // Note: 'name' is not in the backend model 'BillingConfig' but used in frontend.
+    // We'll proceed with other fields. 
+    // If the user wants 'name', they should add it to the backend model.
+
+    const payload = {
+      currency_code: config.currency_code,
+      billing_period: config.billing_period,
+      cpu_rate: Number(config.cpu_rate),
+      ram_rate: Number(config.ram_rate),
+      ram_alloc_rate: Number(config.ram_alloc_rate),
+      disk_rate: Number(config.disk_rate),
+      disk_alloc_rate: Number(config.disk_alloc_rate),
+      uptime_rate: Number(config.uptime_rate),
+    };
 
     if (creatingNew) {
-      const newCard = {
-        ...config,
-        id: rateCards.length ? Math.max(...rateCards.map((c) => c.id)) + 1 : 1,
-      };
-      setRateCards((prev) => [...prev, newCard]);
-      toast.success("New rate card created!");
+      createBillingConfig(payload);
     } else {
-      setRateCards((prev) =>
-        prev.map((c) => (c.id === config.id ? config : c)),
-      );
-      toast.success("Rate card updated!");
+      updateBillingConfig(config.id, payload);
     }
-
-    setCreatingNew(false);
-    setConfig(null);
   };
 
   const handleReset = () => {
@@ -175,7 +146,9 @@ const BillingSettings = () => {
   };
 
   const handleDelete = (id) => {
-    toast.info(`Mock delete of rate card ${id}`);
+    if (window.confirm("Are you sure you want to delete this rate card?")) {
+      deleteBillingConfig(id);
+    }
   };
 
   const updateField = (field, value) => {
