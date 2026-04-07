@@ -71,6 +71,9 @@ func CreateOrder(c *gin.Context) {
 		return
 	}
 
+	if order.Status == "" {
+		order.Status = "pending"
+	}
 	if err := config.DB.Create(&order).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create order"})
 		return

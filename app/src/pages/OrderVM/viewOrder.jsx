@@ -49,8 +49,12 @@ const ViewOrdersPage = () => {
     switch (status) {
       case "approved":
         return "bg-green-50 text-green-700";
+      case "delivered":
+        return "bg-blue-50 text-blue-700";
       case "rejected":
         return "bg-red-50 text-red-700";
+      case "canceled":
+        return "bg-gray-100 text-gray-700";
       default:
         return "bg-yellow-50 text-yellow-700";
     }
@@ -60,6 +64,7 @@ const ViewOrdersPage = () => {
     setLoading(true);
     try {
       const res = await api.get("/api/order/fetch-order");
+      console.log("fetchOrder", res);
       setOrders(res.data);
     } catch (err) {
       console.error("Failed to fetch Order", err);
@@ -112,7 +117,9 @@ const ViewOrdersPage = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {orders.map((order) => {
             const template = templates.find((t) => t.id === order.template_id);
-            const [vmName, ...remarkParts] = order.remark?.split(": ") || ["VM " + order.id];
+            const [vmName, ...remarkParts] = order.remark?.split(": ") || [
+              "VM " + order.id,
+            ];
             const remarkText = remarkParts.join(": ") || order.remark;
 
             return (
@@ -175,12 +182,22 @@ const ViewOrdersPage = () => {
 
                 {/* Remark */}
                 {remarkText && (
-                  <div className="mt-4 text-sm text-gray-500 line-clamp-2">{remarkText}</div>
+                  <div className="mt-4 text-sm text-gray-500 line-clamp-2">
+                    {remarkText}
+                  </div>
                 )}
 
                 {/* Footer */}
                 <button
-                  onClick={() => setSelectedOrder({ ...order, vmName, template: template?.name, specs: template?.specs, remarkText })}
+                  onClick={() =>
+                    setSelectedOrder({
+                      ...order,
+                      vmName,
+                      template: template?.name,
+                      specs: template?.specs,
+                      remarkText,
+                    })
+                  }
                   className="w-full mt-6 py-2 border border-gray-200 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50"
                 >
                   View Details
@@ -224,13 +241,40 @@ const ViewOrdersPage = () => {
                 </span>
               </div>
               <div>
-                <strong>Created On:</strong> {selectedOrder.created_on?.split("T")[0]}
+                <strong>Created On:</strong>{" "}
+                {selectedOrder.created_on?.split("T")[0]}
               </div>
               {selectedOrder.remarkText && (
                 <div>
                   <strong>Remark:</strong> {selectedOrder.remarkText}
                 </div>
               )}
+            </div>
+
+            <div className="mt-8 pt-6 border-t border-gray-100">
+              <h3 className="text-sm font-semibold text-gray-900 mb-3">
+                Update Status
+              </h3>
+              <div className="grid grid-cols-2 gap-2">
+                {["pending", "approved", "delivered", "rejected", "canceled"].map(
+                  (status) => (
+                    <button
+                      key={status}
+                      onClick={async () => {
+                        await updateOrder(selectedOrder.id, { status });
+                        setSelectedOrder({ ...selectedOrder, status });
+                      }}
+                      className={`px-3 py-2 rounded-lg text-xs font-medium capitalize transition-all border ${
+                        selectedOrder.status === status
+                          ? "bg-gray-900 text-white border-gray-900 shadow-sm"
+                          : "bg-white text-gray-600 border-gray-200 hover:border-gray-900"
+                      }`}
+                    >
+                      {status}
+                    </button>
+                  ),
+                )}
+              </div>
             </div>
 
             <button

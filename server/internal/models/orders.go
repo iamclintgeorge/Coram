@@ -7,6 +7,7 @@ type VmOrder struct {
 	UserId     uint      `gorm:"column:userId" json:"user_id"`
 	TemplateId uint      `gorm:"column:templateId" json:"template_id"`
 	Remark     string    `gorm:"column:remark" json:"remark"`
+	Status     string    `gorm:"column:status;default:'pending'" json:"status"`
 	CreatedOn  time.Time `gorm:"autoCreateTime;column:created_on" json:"created_on"`
 	UpdatedOn  time.Time `gorm:"autoUpdateTime;column:updated_on" json:"updated_on"`
 }
