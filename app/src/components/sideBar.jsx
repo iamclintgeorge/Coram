@@ -8,7 +8,7 @@ const menuItems = [
   { path: "/template", label: "Templates", roles: ["root"], icon: Server },
   { path: "/order-vm", label: "Order VM", roles: ["user"], icon: Server },
   { path: "/view-order", label: "View Order", roles: ["root"], icon: Server },
-  { path: "/vms", label: "View VMs", roles: ["root"], icon: Server },
+  { path: "/vms", label: "View VMs", icon: Server },
   { path: "/billing", label: "Invoice", icon: Server },
   {
     path: "/billing/settings",
@@ -17,7 +17,7 @@ const menuItems = [
     icon: Server,
   },
   { path: "/logs", label: "Logs", roles: ["root"], icon: Server },
-  { path: "/alerts", label: "Alerts", icon: Server },
+  { path: "/alerts", label: "Alerts", roles: ["root"], icon: Server },
   { path: "/signup", label: "Create Users", roles: ["root"], icon: Server },
   {
     path: "/manage-users",
@@ -25,7 +25,7 @@ const menuItems = [
     roles: ["root"],
     icon: Server,
   },
-  { path: "/setting", label: "Setting", icon: Server },
+  { path: "/setting", label: "Setting", roles: ["root"], icon: Server },
 ];
 
 const DynamicSideBar = () => {

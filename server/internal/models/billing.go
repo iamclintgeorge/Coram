@@ -18,6 +18,7 @@ type BillingConfig struct {
 
 type BillingRecord struct {
 	ID              uint      `gorm:"primaryKey" json:"id"`
+	UserID          uint      `gorm:"column:user_id;index" json:"user_id"`
 	VMID            int       `gorm:"column:vm_id" json:"vm_id"`
 	StartDate       time.Time `gorm:"column:start_date" json:"start_date"`
 	EndDate         time.Time `gorm:"column:end_date" json:"end_date"`

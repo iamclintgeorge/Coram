@@ -4,7 +4,7 @@ import { toast } from "react-toastify";
 
 const SetupWizard = () => {
   const [step, setStep] = useState(1);
-  
+
   // Step 1 State
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -20,7 +20,10 @@ const SetupWizard = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post(`${import.meta.env.VITE_admin_server}/api/setup/root`, { email, password });
+      await axios.post(`${import.meta.env.VITE_admin_server}/api/setup/root`, {
+        email,
+        password,
+      });
       toast.success("Root account created!");
       setStep(2);
     } catch (err) {
@@ -34,7 +37,10 @@ const SetupWizard = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      await axios.post(`${import.meta.env.VITE_admin_server}/api/setup/proxmox`, { host, port, node_name: nodeName, api_token: apiToken });
+      await axios.post(
+        `${import.meta.env.VITE_admin_server}/api/setup/proxmox`,
+        { host, port, node_name: nodeName, api_token: apiToken },
+      );
       toast.success("Proxmox configured! Redirecting to login...");
       // Force reload to ensure AuthProvider re-evaluates setup status
       window.location.href = "/login";
@@ -46,32 +52,36 @@ const SetupWizard = () => {
   };
 
   return (
-    <div className="min-h-screen bg-neutral-900 flex items-center justify-center p-4 font-sans text-neutral-100">
-      <div className="bg-neutral-800 p-8 rounded-xl shadow-2xl max-w-md w-full border border-neutral-700">
-        <h1 className="text-3xl font-bold mb-8 text-center bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-emerald-400">
+    <div className="min-h-screen flex items-center justify-center p-4 text-black font-inter">
+      <div className="p-8 rounded-xl shadow-lg max-w-md w-full border-gray-500 border">
+        <h1 className="text-3xl font-semibold mb-8 text-center bg-clip-text text-black">
           Coram Initialization
         </h1>
-        
+
         {step === 1 && (
           <form onSubmit={handleRootSubmit} className="space-y-5">
-            <h2 className="text-xl font-semibold mb-2">1. Create Root Account</h2>
+            <h2 className="text-xl font-medium mb-2">1. Create Root Account</h2>
             <div>
-              <label className="block text-sm font-medium text-neutral-400">Email Address</label>
+              <label className="block text-sm font-medium text-neutral-600">
+                Email Address
+              </label>
               <input
                 type="email"
                 required
-                className="mt-1 block w-full rounded-md bg-neutral-900 border-neutral-700 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500 text-white transition-colors"
+                className="mt-1 block w-full rounded-md border-neutral-700 shadow-sm px-3 py-1 border text-black transition-colors"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="admin@example.com"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-400">Strong Password</label>
+              <label className="block text-sm font-medium text-neutral-600">
+                Strong Password
+              </label>
               <input
                 type="password"
                 required
-                className="mt-1 block w-full rounded-md bg-neutral-900 border-neutral-700 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500 text-white transition-colors"
+                className="mt-1 block w-full rounded-md border-neutral-700 shadow-sm px-3 py-1 border text-black transition-colors"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="••••••••"
@@ -81,7 +91,7 @@ const SetupWizard = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-blue-600 to-blue-500 text-white p-3 rounded-md hover:from-blue-500 hover:to-blue-400 font-semibold transition-all disabled:opacity-50"
+              className="w-full bg-gray-900 text-white px-3 py-2 rounded-md hover:text-black text-sm font-medium transition-all disabled:opacity-50"
             >
               {loading ? "Creating Account..." : "Next Step"}
             </button>
@@ -90,13 +100,17 @@ const SetupWizard = () => {
 
         {step === 2 && (
           <form onSubmit={handleProxmoxSubmit} className="space-y-5">
-            <h2 className="text-xl font-semibold mb-2">2. Configure Proxmox Node</h2>
+            <h2 className="text-xl font-medium mb-2">
+              2. Configure Proxmox Node
+            </h2>
             <div>
-              <label className="block text-sm font-medium text-neutral-400">Host (IP or Domain)</label>
+              <label className="block text-sm font-medium text-neutral-600">
+                Host (IP or Domain)
+              </label>
               <input
                 type="text"
                 required
-                className="mt-1 block w-full rounded-md bg-neutral-900 border-neutral-700 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500 text-white transition-colors"
+                className="mt-1 block w-full rounded-md border-neutral-700 shadow-sm px-3 py-1 border text-black transition-colors"
                 value={host}
                 onChange={(e) => setHost(e.target.value)}
                 placeholder="192.168.1.100"
@@ -104,22 +118,26 @@ const SetupWizard = () => {
             </div>
             <div className="flex gap-4">
               <div className="flex-1">
-                <label className="block text-sm font-medium text-neutral-400">Node Name</label>
+                <label className="block text-sm font-medium text-neutral-600">
+                  Node Name
+                </label>
                 <input
                   type="text"
                   required
-                  className="mt-1 block w-full rounded-md bg-neutral-900 border-neutral-700 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500 text-white transition-colors"
+                  className="mt-1 block w-full rounded-md border-neutral-700 shadow-sm px-3 py-1 border text-black transition-colors"
                   value={nodeName}
                   onChange={(e) => setNodeName(e.target.value)}
                   placeholder="pve"
                 />
               </div>
               <div className="w-1/3">
-                <label className="block text-sm font-medium text-neutral-400">Port</label>
+                <label className="block text-sm font-medium text-neutral-600">
+                  Port
+                </label>
                 <input
                   type="text"
                   required
-                  className="mt-1 block w-full rounded-md bg-neutral-900 border-neutral-700 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500 text-white transition-colors"
+                  className="mt-1 block w-full rounded-md border-neutral-700 shadow-sm px-3 py-1 border text-black transition-colors"
                   value={port}
                   onChange={(e) => setPort(e.target.value)}
                   placeholder="8006"
@@ -127,11 +145,13 @@ const SetupWizard = () => {
               </div>
             </div>
             <div>
-              <label className="block text-sm font-medium text-neutral-400">API Token (ID=Secret)</label>
+              <label className="block text-sm font-medium text-neutral-600">
+                API Token (ID=Secret)
+              </label>
               <input
                 type="text"
                 required
-                className="mt-1 block w-full rounded-md bg-neutral-900 border-neutral-700 shadow-sm p-3 border focus:ring-blue-500 focus:border-blue-500 text-white transition-colors"
+                className="mt-1 block w-full rounded-md border-neutral-700 shadow-sm px-3 py-1 border text-black transition-colors"
                 value={apiToken}
                 onChange={(e) => setApiToken(e.target.value)}
                 placeholder="root@pam!token=aaaa-bbbb-cccc"
@@ -140,7 +160,7 @@ const SetupWizard = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 text-white p-3 rounded-md hover:from-emerald-500 hover:to-emerald-400 font-semibold transition-all disabled:opacity-50 cursor-pointer"
+              className="w-full bg-gray-900 text-white px-3 py-2 rounded-md hover:text-black text-sm font-medium transition-all disabled:opacity-50"
             >
               {loading ? "Saving config..." : "Finish Initialization"}
             </button>

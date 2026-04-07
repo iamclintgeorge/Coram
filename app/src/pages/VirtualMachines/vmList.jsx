@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import SpecList from "../../components/specList";
 import api from "../../services/api";
@@ -27,7 +27,7 @@ const VMList = () => {
   const fetchVMStats = async () => {
     if (!selectedNode) return [];
     const response = await api.get(
-      `/api/proxmox/fetchNodeStats/${selectedNode.node_name}`
+      `/api/proxmox/fetchNodeStats/${selectedNode.node_name}`,
     );
     return response.data;
   };
@@ -76,7 +76,7 @@ const VMList = () => {
               value={selectedNode?.id || ""}
               onChange={(e) =>
                 setSelectedNode(
-                  nodes.find((n) => n.id === parseInt(e.target.value))
+                  nodes.find((n) => n.id === parseInt(e.target.value)),
                 )
               }
               className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium outline-none transition-all cursor-pointer border-none"

@@ -235,7 +235,7 @@ func UpdateVMAssign(c *gin.Context) {
     var req struct {
         UserID   uint   `json:"id"`
         VMIDs    []int  `json:"vmids"`
-        ConfigID uint   `json:"config_id"`
+        ConfigID uint   `json:"configId"`
     }
 
     if err := c.ShouldBindJSON(&req); err != nil {

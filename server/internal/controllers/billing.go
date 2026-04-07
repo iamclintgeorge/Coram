@@ -10,8 +10,21 @@ import (
 
 // Billing CRUD Endpoints
 func FetchBill(c *gin.Context) {
+	// Get user from context
+	val, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	user := val.(models.User)
+
 	var records []models.BillingRecord
-	if err := config.DB.Find(&records).Error; err != nil {
+	query := config.DB
+	if user.Role != "root" {
+		query = query.Where("user_id = ?", user.ID)
+	}
+
+	if err := query.Find(&records).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch billing records"})
 		return
 	}
@@ -74,23 +87,38 @@ func DeleteRate(c *gin.Context) {
 
 // GetBillingHistory returns billing records with pagination
 func GetBillingHistory(c *gin.Context) {
+	// Get user from context
+	val, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	user := val.(models.User)
+
 	var records []models.BillingRecord
-	
+
 	page := 1
 	limit := 20
-	
+
 	query := config.DB.Order("created_at DESC")
-	
+	if user.Role != "root" {
+		query = query.Where("user_id = ?", user.ID)
+	}
+
 	vmID := c.Query("vm_id")
 	if vmID != "" {
 		query = query.Where("vm_id = ?", vmID)
 	}
-	
+
 	query.Offset((page - 1) * limit).Limit(limit).Find(&records)
-	
+
 	var total int64
-	config.DB.Model(&models.BillingRecord{}).Count(&total)
-	
+	countQuery := config.DB.Model(&models.BillingRecord{})
+	if user.Role != "root" {
+		countQuery = countQuery.Where("user_id = ?", user.ID)
+	}
+	countQuery.Count(&total)
+
 	c.JSON(http.StatusOK, gin.H{
 		"records": records,
 		"total":   total,
@@ -101,9 +129,24 @@ func GetBillingHistory(c *gin.Context) {
 
 func UpdateBillStatus(c *gin.Context) {
 	id := c.Param("id")
+
+	// Get user from context
+	val, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	user := val.(models.User)
+
 	var record models.BillingRecord
 	if err := config.DB.First(&record, id).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Billing record not found"})
+		return
+	}
+
+	// Permission check
+	if user.Role != "root" && record.UserID != user.ID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
 		return
 	}
 
