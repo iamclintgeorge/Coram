@@ -105,7 +105,7 @@ const ViewUsersPage = () => {
       const res = await api.post("/api/update-vm-assign", {
         id: userId,
         vmids: vmIds.map((id) => parseInt(id)),
-        config_id: configId,
+        configId: configId,
       });
       return res.data;
     } catch (err) {
@@ -118,7 +118,11 @@ const ViewUsersPage = () => {
   // 🔹 Open modal
   const handleEdit = (user) => {
     setSelectedUser(user);
-    setSelectedVMs(user.vms || []);
+    // Find assignment for current user and current node from fetchedVMs
+    const assignment = fetchedVMs.find(
+      (a) => a.user_id === user.id && a.proxmox_config_id === selectedNode?.id,
+    );
+    setSelectedVMs(assignment?.vm_id || []);
     setIsModalOpen(true);
   };
 
@@ -244,19 +248,37 @@ const ViewUsersPage = () => {
                   </td>
 
                   <td className="px-6 py-4 text-sm text-gray-600">
-                    {/* {console.log("fetchedVMs", fetchedVMs)}
-                    {console.log("vmList", vmList)}
-                    {console.log("u", u)} */}
-                    {u.vms?.length
-                      ? u.vms
-                          .map(
-                            (vmid) =>
-                              vmList.find((v) => Number(v.id) === vmid)
-                                ?.name,
-                          )
-                          .filter(Boolean)
-                          .join(", ")
-                      : "None"}
+                    {u.vms?.length ? (
+                      <div className="flex flex-wrap gap-1">
+                        {u.vms.map((vmid) => {
+                          const vmOnCurrentNode = vmList.find(
+                            (v) => Number(v.id) === vmid,
+                          );
+                          if (vmOnCurrentNode) {
+                            return (
+                              <span
+                                key={vmid}
+                                className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-blue-100 text-blue-800"
+                              >
+                                {vmOnCurrentNode.name}
+                              </span>
+                            );
+                          }
+                          // Check if it's from another node
+                          return (
+                            <span
+                              key={vmid}
+                              className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600"
+                              title="Belongs to another node"
+                            >
+                              {vmid}*
+                            </span>
+                          );
+                        })}
+                      </div>
+                    ) : (
+                      "None"
+                    )}
                   </td>
 
                   <td className="px-6 py-4 space-x-7 text-right">

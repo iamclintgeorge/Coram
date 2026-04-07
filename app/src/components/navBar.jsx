@@ -82,18 +82,18 @@ const NavBar = () => {
                 </button>
                 {isUserOpen && (
                   <div className="absolute left-16 transform -translate-x-full py-4 px-5 space-y-4 border-gray-400 shadow-md border-2 bg-[#f4f4f4] text-nowrap">
-                    {user.role !== "superAdmin" && (
+                    {/* {user.role !== "superAdmin" && (
                       <Link to="/profile">
                         <p className="mb-5">Edit Profile</p>
                       </Link>
-                    )}
+                    )} */}
 
                     {/* <Link to="/profile">
                       <p>Edit Profile</p>
                     </Link> */}
-                    <Link to="/change_password">
+                    {/* <Link to="/change_password">
                       <p>Edit Account</p>
-                    </Link>
+                    </Link> */}
                     {/* {(user.role === "hod" || user.role === "superAdmin") && (
                       <Link to="/hoddesk">
                         <p className="mt-5">HOD's Desk</p>
@@ -106,7 +106,7 @@ const NavBar = () => {
                       </Link>
                     )} */}
                     <Link to="/login">
-                      <p className="mt-5">Switch User</p>
+                      <p>Switch User</p>
                     </Link>
                     <button onClick={handleSignout}>Sign Out</button>
                   </div>

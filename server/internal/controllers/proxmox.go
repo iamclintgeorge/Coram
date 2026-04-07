@@ -15,7 +15,15 @@ import (
 // This fetches Information of all the VMs in a node
 func FetchNodeStats(c *gin.Context) {
 	nodeName := c.Param("node")
-	
+
+	// Get user from context
+	val, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	user := val.(models.User)
+
 	// Find config by node name (assuming unique for simplicity in current frontend)
 	var pConfig models.ProxmoxConfig
 	if err := config.DB.Where("node_name = ?", nodeName).First(&pConfig).Error; err != nil {
@@ -37,6 +45,29 @@ func FetchNodeStats(c *gin.Context) {
 		return
 	}
 
+	if user.Role != "root" {
+		var vmAssigned models.VmAssigned
+		if err := config.DB.Where("userId = ? AND proxmox_configId = ?", user.ID, pConfig.ID).First(&vmAssigned).Error; err != nil {
+			// No VMs assigned to this user on this node
+			c.JSON(http.StatusOK, []interface{}{})
+			return
+		}
+
+		assignedIds := make(map[int]bool)
+		for _, id := range vmAssigned.VmId {
+			assignedIds[id] = true
+		}
+
+		var filtered []proxmox.VMData
+		for _, vm := range vms {
+			if assignedIds[vm.VMID] {
+				filtered = append(filtered, vm)
+			}
+		}
+		c.JSON(http.StatusOK, filtered)
+		return
+	}
+
 	c.JSON(http.StatusOK, vms)
 }
 
@@ -44,10 +75,46 @@ func FetchVMStats(c *gin.Context) {
 	nodeName := c.Param("node")
 	vmIDStr := c.Param("id")
 
+	// Get user from context
+	val, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	user := val.(models.User)
+
 	var pConfig models.ProxmoxConfig
 	if err := config.DB.Where("node_name = ?", nodeName).First(&pConfig).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Node configuration not found"})
 		return
+	}
+
+	vmID, err := strconv.Atoi(vmIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid VM ID"})
+		return
+	}
+
+	// Permission check
+	if user.Role != "root" {
+		var vmAssigned models.VmAssigned
+		if err := config.DB.Where("userId = ? AND proxmox_configId = ?", user.ID, pConfig.ID).First(&vmAssigned).Error; err != nil {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			return
+		}
+
+		isAssigned := false
+		for _, id := range vmAssigned.VmId {
+			if id == vmID {
+				isAssigned = true
+				break
+			}
+		}
+
+		if !isAssigned {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			return
+		}
 	}
 
 	client := proxmox.NewClient(
@@ -56,12 +123,6 @@ func FetchVMStats(c *gin.Context) {
 		pConfig.NodeName,
 		pConfig.APIToken,
 	)
-
-	vmID, err := strconv.Atoi(vmIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid VM ID"})
-		return
-	}
 
 	vms, err := client.GetVMStatus(vmID)
 	if err != nil {
@@ -77,10 +138,46 @@ func ControlVM(c *gin.Context) {
 	nodeName := c.Param("node")
 	vmIDStr := c.Param("id")
 
+	// Get user from context
+	val, exists := c.Get("user")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	user := val.(models.User)
+
 	var pConfig models.ProxmoxConfig
 	if err := config.DB.Where("node_name = ?", nodeName).First(&pConfig).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Node configuration not found"})
 		return
+	}
+
+	vmID, err := strconv.Atoi(vmIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid VM ID"})
+		return
+	}
+
+	// Permission check
+	if user.Role != "root" {
+		var vmAssigned models.VmAssigned
+		if err := config.DB.Where("userId = ? AND proxmox_configId = ?", user.ID, pConfig.ID).First(&vmAssigned).Error; err != nil {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			return
+		}
+
+		isAssigned := false
+		for _, id := range vmAssigned.VmId {
+			if id == vmID {
+				isAssigned = true
+				break
+			}
+		}
+
+		if !isAssigned {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Access denied"})
+			return
+		}
 	}
 
 	var payload map[string]interface{}
@@ -101,12 +198,6 @@ func ControlVM(c *gin.Context) {
 		pConfig.NodeName,
 		pConfig.APIToken,
 	)
-
-	vmID, err := strconv.Atoi(vmIDStr)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid VM ID"})
-		return
-	}
 
 	err = client.ControlVM(vmID, action)
 	if err != nil {
