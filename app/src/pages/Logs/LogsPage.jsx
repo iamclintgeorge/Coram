@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../../services/api";
 import usePolling from "../../hooks/usePolling";
 import { timeAgo } from "../../utils/formatters";
 import { RefreshCw, Filter, Terminal, Activity } from "lucide-react";
@@ -16,7 +16,20 @@ const LogsPage = () => {
     limit: 50,
   });
   const [showFilters, setShowFilters] = useState(false);
-  const nodeName = "pve";
+  const [nodes, setNodes] = useState([]);
+  const [selectedNode, setSelectedNode] = useState(null);
+
+  const fetchNodes = async () => {
+    try {
+      const res = await api.get("/api/proxmox/get-config");
+      setNodes(res.data.nodes || []);
+      if (res.data.nodes?.length > 0 && !selectedNode) {
+        setSelectedNode(res.data.nodes[0]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch Proxmox nodes", err);
+    }
+  };
 
   // Coram logs polling
   const fetchCoramLogs = async () => {
@@ -24,19 +37,14 @@ const LogsPage = () => {
     Object.entries(filters).forEach(([k, v]) => {
       if (v) params.append(k, v);
     });
-    const response = await axios.get(
-      `${import.meta.env.VITE_admin_server}/api/logs?${params}`,
-      { withCredentials: true }
-    );
+    const response = await api.get(`/api/logs?${params}`);
     return response.data;
   };
 
   // Proxmox syslog polling
   const fetchProxmoxLogs = async () => {
-    const response = await axios.get(
-      `${import.meta.env.VITE_admin_server}/api/logs/proxmox/${nodeName}`,
-      { withCredentials: true }
-    );
+    if (!selectedNode) return { data: [] };
+    const response = await api.get(`/api/logs/proxmox/${selectedNode.node_name}`);
     return response.data;
   };
 
@@ -52,7 +60,15 @@ const LogsPage = () => {
     loading: proxmoxLoading,
     lastUpdated: proxmoxUpdated,
     refresh: proxmoxRefresh,
-  } = usePolling(fetchProxmoxLogs, POLL_INTERVAL, activeTab === "proxmox");
+  } = usePolling(
+    fetchProxmoxLogs,
+    POLL_INTERVAL,
+    activeTab === "proxmox" && !!selectedNode
+  );
+
+  useEffect(() => {
+    fetchNodes();
+  }, []);
 
   const levelColors = {
     error: "bg-red-100 text-red-700",
@@ -88,6 +104,24 @@ const LogsPage = () => {
           </p>
         </div>
         <div className="flex items-center gap-3">
+          {activeTab === "proxmox" && nodes.length > 1 && (
+            <select
+              value={selectedNode?.id || ""}
+              onChange={(e) =>
+                setSelectedNode(
+                  nodes.find((n) => n.id === parseInt(e.target.value))
+                )
+              }
+              className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium outline-none transition-all cursor-pointer border-none"
+            >
+              {nodes.map((node) => (
+                <option key={node.id} value={node.id}>
+                  Node: {node.node_name}
+                </option>
+              ))}
+            </select>
+          )}
+
           {lastUpdated && (
             <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
               <span className="relative flex h-2 w-2">

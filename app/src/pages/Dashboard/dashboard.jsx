@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import SpecList from "../../components/specList";
 import { CheckCircle, Cpu, Server, Activity, RefreshCw } from "lucide-react";
-import axios from "axios";
+import api from "../../services/api";
 import usePolling from "../../hooks/usePolling";
 import {
   formatBytes,
@@ -16,14 +16,26 @@ const POLL_INTERVAL = 10000;
 const ALERT_FETCH_INTERVAL = 60000;
 
 const Dashboard = () => {
-  const nodeName = "pve";
+  const [nodes, setNodes] = useState([]);
+  const [selectedNode, setSelectedNode] = useState(null);
+
+  const fetchNodes = async () => {
+    try {
+      const res = await api.get("/api/proxmox/get-config");
+      setNodes(res.data.nodes || []);
+      if (res.data.nodes?.length > 0 && !selectedNode) {
+        setSelectedNode(res.data.nodes[0]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch Proxmox nodes", err);
+    }
+  };
 
   const fetchStats = async () => {
-    const response = await axios.get(
-      `${import.meta.env.VITE_admin_server}/api/proxmox/fetchNodeStats/${nodeName}`,
-      { withCredentials: true },
+    if (!selectedNode) return [];
+    const response = await api.get(
+      `/api/proxmox/fetchNodeStats/${selectedNode.node_name}`,
     );
-    console.log("fetchStats:", response);
     return response.data;
   };
 
@@ -32,7 +44,11 @@ const Dashboard = () => {
     loading,
     lastUpdated,
     refresh,
-  } = usePolling(fetchStats, POLL_INTERVAL);
+  } = usePolling(fetchStats, POLL_INTERVAL, !!selectedNode);
+
+  useEffect(() => {
+    fetchNodes();
+  }, []);
 
   const runningVMs = stats?.filter((vm) => vm.status === "running").length || 0;
   const totalVMs = stats?.length || 0;
@@ -98,6 +114,24 @@ const Dashboard = () => {
           </p>
         </div>
         <div className="flex items-center gap-4">
+          {nodes.length > 1 && (
+            <select
+              value={selectedNode?.id || ""}
+              onChange={(e) =>
+                setSelectedNode(
+                  nodes.find((n) => n.id === parseInt(e.target.value)),
+                )
+              }
+              className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium outline-none transition-all cursor-pointer border-none"
+            >
+              {nodes.map((node) => (
+                <option key={node.id} value={node.id}>
+                  Node: {node.node_name}
+                </option>
+              ))}
+            </select>
+          )}
+
           {lastUpdated && (
             <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
               <span className="relative flex h-2.5 w-2.5">

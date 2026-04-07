@@ -44,6 +44,7 @@ const SettingsPage = () => {
 
   const addNode = async (nodeData) => {
     try {
+      console.log("nodeData", nodeData);
       await api.post("/api/proxmox/create-config", nodeData);
       toast.success("Node added successfully");
       fetchProxmoxConfig();
@@ -90,7 +91,8 @@ const SettingsPage = () => {
 
   // SAVE NODE
   const handleSaveNode = async () => {
-    if (!form.host || !form.port || !form.nodeName || !form.apiToken) {
+    console.log("handleSaveNode", form);
+    if (!form.host || !form.port || !form.node_name || !form.api_token) {
       toast.error("All fields are required");
       return;
     }
@@ -116,7 +118,9 @@ const SettingsPage = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    toast.info("General settings saved locally (sync with backend not implemented for theme)");
+    toast.info(
+      "General settings saved locally (sync with backend not implemented for theme)",
+    );
   };
 
   if (loading) {

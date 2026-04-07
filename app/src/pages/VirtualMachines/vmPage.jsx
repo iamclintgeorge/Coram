@@ -18,7 +18,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
-import axios from "axios";
+import api from "../../services/api";
 import usePolling from "../../hooks/usePolling";
 import {
   formatBytes,
@@ -94,15 +94,25 @@ const CustomTooltip = ({ active, payload, label, unit }) => {
 
 const VmPage = () => {
   const { id } = useParams();
-  const nodeName = "pve";
-  const [history, setHistory] = useState([]);
-  const [actionLoading, setActionLoading] = useState(null);
-  const [vncLoading, setVncLoading] = useState(false);
+  const [nodes, setNodes] = useState([]);
+  const [selectedNode, setSelectedNode] = useState(null);
+
+  const fetchNodes = async () => {
+    try {
+      const res = await api.get("/api/proxmox/get-config");
+      setNodes(res.data.nodes || []);
+      if (res.data.nodes?.length > 0 && !selectedNode) {
+        setSelectedNode(res.data.nodes[0]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch Proxmox nodes", err);
+    }
+  };
 
   const fetchVMDetails = async () => {
-    const response = await axios.get(
-      `${import.meta.env.VITE_admin_server}/api/proxmox/vms/${nodeName}/${id}`,
-      { withCredentials: true },
+    if (!selectedNode) return null;
+    const response = await api.get(
+      `/api/proxmox/vms/${selectedNode.node_name}/${id}`
     );
     return response.data;
   };
@@ -112,7 +122,15 @@ const VmPage = () => {
     loading,
     lastUpdated,
     refresh,
-  } = usePolling(fetchVMDetails, POLL_INTERVAL);
+  } = usePolling(fetchVMDetails, POLL_INTERVAL, !!selectedNode);
+
+  const [history, setHistory] = useState([]);
+  const [actionLoading, setActionLoading] = useState(null);
+  const [vncLoading, setVncLoading] = useState(false);
+
+  useEffect(() => {
+    fetchNodes();
+  }, []);
 
   // Update history charts whenever new VM data arrives
   useEffect(() => {
@@ -148,11 +166,9 @@ const VmPage = () => {
   const handleVMAction = async (action) => {
     setActionLoading(action);
     try {
-      await axios.post(
-        `${import.meta.env.VITE_admin_server}/api/proxmox/vms/${nodeName}/${id}`,
-        { action },
-        { withCredentials: true },
-      );
+      await api.post(`/api/proxmox/vms/${selectedNode.node_name}/${id}`, {
+        action,
+      });
       setTimeout(refresh, 1500);
     } catch (err) {
       console.error("Failed to Perform VM Action", err);
@@ -181,7 +197,9 @@ const VmPage = () => {
   }
 
   const isRunning = vm.status === "running";
-  const vncURL = `https://192.168.122.15:8006/?console=kvm&novnc=1&vmid=${vm.vmid}&vmname=${vm.name}&node=${nodeName}&resize=off&cmd=`;
+  const vncURL = selectedNode
+    ? `https://${selectedNode.host}:${selectedNode.port}/?console=kvm&novnc=1&vmid=${vm.vmid}&vmname=${vm.name}&node=${selectedNode.node_name}&resize=off&cmd=`
+    : "";
 
   const actions = [
     { key: "start", label: "Start", disabled: isRunning },
@@ -231,15 +249,35 @@ const VmPage = () => {
           </div>
         </div>
 
-        {lastUpdated && (
-          <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-            </span>
-            Live · {timeAgo(lastUpdated)}
-          </div>
-        )}
+        <div className="flex items-center gap-3">
+          {nodes.length > 1 && (
+            <select
+              value={selectedNode?.id || ""}
+              onChange={(e) =>
+                setSelectedNode(
+                  nodes.find((n) => n.id === parseInt(e.target.value))
+                )
+              }
+              className="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 text-sm font-medium outline-none transition-all cursor-pointer border-none"
+            >
+              {nodes.map((node) => (
+                <option key={node.id} value={node.id}>
+                  Node: {node.node_name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {lastUpdated && (
+            <div className="flex items-center gap-2 text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-full">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+              </span>
+              Live · {timeAgo(lastUpdated)}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Actions */}
