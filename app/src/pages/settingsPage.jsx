@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import api from "../services/api";
 import { toast } from "react-toastify";
 
 const SettingsPage = () => {
@@ -15,8 +15,8 @@ const SettingsPage = () => {
   const [form, setForm] = useState({
     host: "",
     port: "",
-    nodeName: "",
-    apiToken: "",
+    node_name: "",
+    api_token: "",
   });
 
   useEffect(() => {
@@ -24,18 +24,17 @@ const SettingsPage = () => {
   }, []);
 
   const fetchProxmoxConfig = async () => {
+    setLoading(true);
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_admin_server}/api/setup/proxmox`,
-        { withCredentials: true },
-      );
-      if (response.data?.nodes?.length) {
+      const response = await api.get("/api/proxmox/get-config");
+      if (response.data?.nodes) {
         setNodes(response.data.nodes);
       }
     } catch (error) {
       if (error.response?.status !== 404) {
         toast.error("Failed to load Proxmox configuration");
       }
+      setNodes([]);
     } finally {
       setLoading(false);
     }
@@ -43,53 +42,42 @@ const SettingsPage = () => {
 
   // OPEN MODAL FOR NEW NODE
 
-  const addNode = async () => {
+  const addNode = async (nodeData) => {
     try {
-      const res = await axios.post(
-        `${import.meta.env.VITE_admin_server}/api/proxmox/create-config`,
-        { withCredentials: true },
-      );
+      await api.post("/api/proxmox/create-config", nodeData);
+      toast.success("Node added successfully");
+      fetchProxmoxConfig();
     } catch (err) {
       console.error("Failed to Create Node Config", err);
+      toast.error(err.response?.data?.error || "Failed to add node");
     }
   };
 
-  const fetchNode = async () => {
+  const updateNode = async (id, nodeData) => {
     try {
-      const res = await axios.get(
-        `${import.meta.env.VITE_admin_server}/api/proxmox/get-config`,
-        { withCredentials: true },
-      );
-    } catch (err) {
-      console.error("Failed to fetch Node Config", err);
-    }
-  };
-
-  const updateNode = async () => {
-    try {
-      const res = await axios.patch(
-        `${import.meta.env.VITE_admin_server}/api/proxmox/update-config`,
-        { withCredentials: true },
-      );
+      await api.put(`/api/proxmox/update-config/${id}`, nodeData);
+      toast.success("Node updated successfully");
+      fetchProxmoxConfig();
     } catch (err) {
       console.error("Failed to Update Node Config", err);
+      toast.error(err.response?.data?.error || "Failed to update node");
     }
   };
 
-  const deleteNode = async () => {
+  const deleteNode = async (id) => {
     try {
-      const res = await axios.delete(
-        `${import.meta.env.VITE_admin_server}/api/proxmox/delete-config`,
-        { withCredentials: true },
-      );
+      await api.delete(`/api/proxmox/delete-config/${id}`);
+      toast.success("Node deleted successfully");
+      fetchProxmoxConfig();
     } catch (err) {
       console.error("Failed to Delete Node Config", err);
+      toast.error(err.response?.data?.error || "Failed to delete node");
     }
   };
 
   const handleAddNode = () => {
     setEditingIndex(null);
-    setForm({ host: "", port: "", nodeName: "", apiToken: "" });
+    setForm({ host: "", port: "", node_name: "", api_token: "" });
     setIsNodeModalOpen(true);
   };
 
@@ -101,44 +89,34 @@ const SettingsPage = () => {
   };
 
   // SAVE NODE
-  const handleSaveNode = () => {
+  const handleSaveNode = async () => {
     if (!form.host || !form.port || !form.nodeName || !form.apiToken) {
       toast.error("All fields are required");
       return;
     }
 
+    setSaving(true);
     if (editingIndex !== null) {
-      // update existing
-      const updated = [...nodes];
-      updated[editingIndex] = form;
-      setNodes(updated);
+      const nodeId = nodes[editingIndex].ID; // Capital ID from GORM
+      await updateNode(nodeId, form);
     } else {
-      // add new
-      setNodes((prev) => [...prev, form]);
+      await addNode(form);
     }
 
+    setSaving(false);
     setIsNodeModalOpen(false);
   };
 
-  const removeNode = (index) => {
-    setNodes((prev) => prev.filter((_, i) => i !== index));
+  const removeNode = async (index) => {
+    const nodeId = nodes[index].ID;
+    if (window.confirm("Are you sure you want to delete this node?")) {
+      await deleteNode(nodeId);
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setSaving(true);
-    try {
-      await axios.post(
-        `${import.meta.env.VITE_admin_server}/api/setup/proxmox`,
-        { nodes },
-        { withCredentials: true },
-      );
-      toast.success("Proxmox settings updated successfully");
-    } catch (error) {
-      toast.error(error.response?.data?.error || "Failed to save settings");
-    } finally {
-      setSaving(false);
-    }
+    toast.info("General settings saved locally (sync with backend not implemented for theme)");
   };
 
   if (loading) {
@@ -258,7 +236,7 @@ const SettingsPage = () => {
                     >
                       <div>
                         <div className="font-medium text-gray-900">
-                          {node.nodeName || "Unnamed Node"}
+                          {node.node_name || "Unnamed Node"}
                         </div>
                         <div className="text-sm text-gray-500">
                           {node.host}:{node.port}
@@ -313,18 +291,18 @@ const SettingsPage = () => {
 
                     <input
                       placeholder="Node Name"
-                      value={form.nodeName}
+                      value={form.node_name}
                       onChange={(e) =>
-                        setForm({ ...form, nodeName: e.target.value })
+                        setForm({ ...form, node_name: e.target.value })
                       }
                       className="p-3 border rounded-lg"
                     />
 
                     <input
                       placeholder="API Token"
-                      value={form.apiToken}
+                      value={form.api_token}
                       onChange={(e) =>
-                        setForm({ ...form, apiToken: e.target.value })
+                        setForm({ ...form, api_token: e.target.value })
                       }
                       className="p-3 border rounded-lg"
                     />

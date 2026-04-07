@@ -23,6 +23,7 @@ type BillingRecord struct {
 	EndDate         time.Time `gorm:"column:end_date" json:"end_date"`
 	VmDetail        string    `gorm:"column:vm_detail" json:"vm_detail"` // Stored as JSON string
 	TotalCost       float64   `gorm:"column:total_cost" json:"total_cost"`
+	Status          string    `gorm:"column:status;default:unpaid" json:"status"` // paid or unpaid
 	BillingConfigId uint      `gorm:"column:billing_configId" json:"billing_config_id"`
 	CreatedOn       time.Time `gorm:"autoCreateTime;column:created_on" json:"created_on"`
 	UpdatedOn       time.Time `gorm:"autoUpdateTime;column:updated_on" json:"updated_on"`

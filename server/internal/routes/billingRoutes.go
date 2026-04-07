@@ -15,6 +15,7 @@ func BillingRoutes(rg *gin.RouterGroup) {
 		billing.GET("/fetch-config", controllers.FetchRate)
 		billing.PUT("/update-config/:id", controllers.UpdateRate)
 		billing.DELETE("/delete-config/:id", controllers.DeleteRate)
+		billing.PUT("/update-invoice/:id", controllers.UpdateBillStatus)
 		billing.GET("/history", controllers.GetBillingHistory)
 	}
 }

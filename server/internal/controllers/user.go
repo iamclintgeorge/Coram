@@ -170,30 +170,26 @@ func FetchUsers(c *gin.Context) {
 
 	// Prepare data for frontend
 	type UserResponse struct {
-		ID        uint     `json:"ID"`
-		UserName  string   `json:"UserName"`
-		Email     string   `json:"Email"`
-		Role      string   `json:"Role"`
-		CreatedOn string   `json:"CreatedOn"`
-		VMs       []string `json:"VMs"`
+		ID        uint   `json:"ID"`
+		UserName  string `json:"UserName"`
+		Email     string `json:"Email"`
+		Role      string `json:"Role"`
+		CreatedOn string `json:"CreatedOn"`
+		VMs       []int  `json:"VMs"`
 	}
 
 	var responseUsers []UserResponse
 	for _, u := range users {
-		var vms []string
-		// u.VMAssigned is a JSON string of array
-		// e.g. ["100", "101"]
-		// We could use json.Unmarshal here if needed, but for now let's just pass it or parse it
-		// The frontend expects an array of strings (vmid)
-		// For simplicity, let's just return what's in users table if it's there
-		// Or fetch from VmAssigned table? 
-		// User said: "vm_assigned (This will store vms in an array)" in users table
-		// and "vmAssigned.db: id, userId, vmId, proxmox_configId"
-		// Let's rely on users table for the list of IDs for fetchUsers
+		var vms []int
 		
-		// FIXME: For now, if VMAssigned is empty or invalid, return empty array
-		vms = []string{}
-		// Basic parsing if needed, but let's just send what we have
+		// Fetch assigned VMs for this user
+		var assigned []models.VmAssigned
+		config.DB.Where("userId = ?", u.ID).Find(&assigned)
+		
+		// Collect all VM IDs from all assigned nodes for this user
+		for _, a := range assigned {
+			vms = append(vms, a.VmId...)
+		}
 		
 		responseUsers = append(responseUsers, UserResponse{
 			ID:        u.ID,
@@ -201,7 +197,7 @@ func FetchUsers(c *gin.Context) {
 			Email:     u.Email,
 			Role:      u.Role,
 			CreatedOn: u.CreatedOn.Format("2006-01-02T15:04:05Z"),
-			VMs:       vms, // We will populate this properly if needed
+			VMs:       vms,
 		})
 	}
 
@@ -236,39 +232,60 @@ func DeleteUsers(c *gin.Context) {
 
 
 func UpdateVMAssign(c *gin.Context) {
-	var req struct {
-		UserID   uint `json:"id"`
-		VMID     int  `json:"vmid"`
-		ConfigID uint `json:"config_id"`
-	}
+    var req struct {
+        UserID   uint   `json:"id"`
+        VMIDs    []int  `json:"vmids"`
+        ConfigID uint   `json:"config_id"`
+    }
 
-	if err := c.ShouldBindJSON(&req); err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request"})
-		return
-	}
+    if err := c.ShouldBindJSON(&req); err != nil {
+        c.JSON(http.StatusBadRequest, gin.H{"message": "Invalid request"})
+        return
+    }
 
-	vmAssign := models.VmAssigned{
-		UserId:          req.UserID,
-		VmId:            req.VMID,
-		ProxmoxConfigId: req.ConfigID,
-	}
+    var vmAssign models.VmAssigned
+    res := config.DB.Where("userId = ? AND proxmox_configId = ?", req.UserID, req.ConfigID).First(&vmAssign)
 
-	// Check if already exists
-	var existing models.VmAssigned
-	res := config.DB.Where("userId = ? AND vmId = ? AND proxmox_configId = ?", req.UserID, req.VMID, req.ConfigID).First(&existing)
+    if res.Error == gorm.ErrRecordNotFound {
+        // Create new record
+        vmAssign = models.VmAssigned{
+            UserId:          req.UserID,
+            VmId:            req.VMIDs,
+            ProxmoxConfigId: req.ConfigID,
+        }
+        if err := config.DB.Create(&vmAssign).Error; err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign VMs"})
+            return
+        }
+    } else if res.Error != nil {
+        c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+        return
+    } else {
+        // Update existing record
+        vmAssign.VmId = req.VMIDs
+        if err := config.DB.Save(&vmAssign).Error; err != nil {
+            c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update VM assignment"})
+            return
+        }
+    }
 
-	if res.Error == gorm.ErrRecordNotFound {
-		if err := config.DB.Create(&vmAssign).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign VM"})
-			return
-		}
-	} else if res.Error != nil {
+    c.JSON(http.StatusOK, gin.H{
+        "message": "VM assignments updated successfully",
+        "data":    vmAssign,
+    })
+}
+
+func FetchVMs(c *gin.Context) {
+	var vms []models.VmAssigned
+
+	result := config.DB.Find(&vms)
+
+	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"message": "VM assigned successfully",
-		"data":    vmAssign,
+		"vms": vms,
 	})
 }
