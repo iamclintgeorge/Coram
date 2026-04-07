@@ -4,7 +4,8 @@ import { Trash2, Edit3, Search, User, Mail, Shield, X } from "lucide-react";
 import { toast } from "react-toastify";
 
 const ViewUsersPage = () => {
-  const nodeName = "pve";
+  const [nodes, setNodes] = useState([]);
+  const [selectedNode, setSelectedNode] = useState(null);
   const [users, setUsers] = useState([]);
 
   const [vmList, setVmList] = useState([]);
@@ -16,9 +17,24 @@ const ViewUsersPage = () => {
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const fetchVMs = async () => {
+  const fetchNodes = async () => {
     try {
-      const res = await api.get(`/api/proxmox/fetchNodeStats/${nodeName}`);
+      const res = await api.get("/api/proxmox/get-config");
+      setNodes(res.data.nodes || []);
+      if (res.data.nodes?.length > 0 && !selectedNode) {
+        setSelectedNode(res.data.nodes[0]);
+      }
+    } catch (err) {
+      console.error("Failed to fetch Proxmox nodes", err);
+    }
+  };
+
+  const fetchVMs = async () => {
+    if (!selectedNode) return;
+    try {
+      const res = await api.get(
+        `/api/proxmox/fetchNodeStats/${selectedNode.node_name}`,
+      );
 
       const formattedVMs = res?.data.map((vm) => ({
         id: vm.vmid.toString(),
@@ -62,9 +78,15 @@ const ViewUsersPage = () => {
 
   useEffect(() => {
     fetchUsers();
-    fetchVMs();
+    fetchNodes();
     fetchAssignedVM();
   }, []);
+
+  useEffect(() => {
+    if (selectedNode) {
+      fetchVMs();
+    }
+  }, [selectedNode]);
 
   const deleteUsers = async (id) => {
     try {
@@ -77,7 +99,7 @@ const ViewUsersPage = () => {
     }
   };
 
-  const updateVMAssign = async (userId, vmIds, configId = 1) => {
+  const updateVMAssign = async (userId, vmIds, configId) => {
     console.log("updateVMAssign", userId, vmIds, configId);
     try {
       const res = await api.post("/api/update-vm-assign", {
@@ -88,7 +110,7 @@ const ViewUsersPage = () => {
       return res.data;
     } catch (err) {
       console.error("Failed to Update VM Assignment", err);
-      toast.error(`Failed to assign VM ${vmId}`);
+      toast.error("Failed to update VM assignments");
       throw err;
     }
   };
@@ -111,7 +133,7 @@ const ViewUsersPage = () => {
   const handleSaveVMs = async () => {
     setLoading(true);
     try {
-      await updateVMAssign(selectedUser.id, selectedVMs);
+      await updateVMAssign(selectedUser.id, selectedVMs, selectedNode?.id);
 
       toast.success("VM assignments updated");
       setIsModalOpen(false);
@@ -149,18 +171,38 @@ const ViewUsersPage = () => {
           </p>
         </div>
 
-        <div className="relative">
-          <Search
-            className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
-            size={18}
-          />
-          <input
-            type="text"
-            placeholder="Search name or email..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl w-full md:w-80 focus:ring-2 focus:ring-gray-900 outline-none transition-all text-sm"
-          />
+        <div className="flex items-center gap-3">
+          {nodes.length > 1 && (
+            <select
+              value={selectedNode?.id || ""}
+              onChange={(e) =>
+                setSelectedNode(
+                  nodes.find((n) => n.id === parseInt(e.target.value)),
+                )
+              }
+              className="px-4 py-2.5 border border-gray-200 rounded-xl bg-white text-sm focus:ring-2 focus:ring-gray-900 outline-none transition-all cursor-pointer"
+            >
+              {nodes.map((node) => (
+                <option key={node.id} value={node.id}>
+                  Node: {node.node_name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <div className="relative">
+            <Search
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              size={18}
+            />
+            <input
+              type="text"
+              placeholder="Search name or email..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 pr-4 py-2.5 border border-gray-200 rounded-xl w-full md:w-80 focus:ring-2 focus:ring-gray-900 outline-none transition-all text-sm"
+            />
+          </div>
         </div>
       </div>
 
