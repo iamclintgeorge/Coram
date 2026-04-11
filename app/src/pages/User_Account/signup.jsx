@@ -101,7 +101,7 @@ function DynamicSignup() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 placeholder="johndoe"
-                className="w-full rounded-lg border border-gray-200 p-2.5 text-gray-800 focus:ring-2 focus:ring-gray-900 outline-none transition-all"
+                className="w-full rounded-lg border border-gray-200 px-3 py-1 text-gray-800 focus:ring-2 focus:ring-gray-900 outline-none transition-all"
               />
             </div>
 
@@ -116,7 +116,7 @@ function DynamicSignup() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 placeholder="john@example.com"
-                className="w-full rounded-lg border border-gray-200 p-2.5 text-gray-800 focus:ring-2 focus:ring-gray-900 outline-none transition-all"
+                className="w-full rounded-lg border border-gray-200 px-3 py-1 text-gray-800 focus:ring-2 focus:ring-gray-900 outline-none transition-all"
               />
             </div>
 
@@ -131,7 +131,7 @@ function DynamicSignup() {
                 onChange={(e) => setPassword(e.target.value)}
                 required
                 placeholder="••••••••"
-                className="w-full rounded-lg border border-gray-200 p-2.5 text-gray-800 focus:ring-2 focus:ring-gray-900 outline-none transition-all"
+                className="w-full rounded-lg border border-gray-200 px-3 py-1 text-gray-800 focus:ring-2 focus:ring-gray-900 outline-none transition-all"
               />
             </div>
           </div>
@@ -140,7 +140,7 @@ function DynamicSignup() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-gray-900 text-white text-sm px-6 py-2 rounded-md hover:bg-black transition-all flex items-center justify-center gap-2 font-medium disabled:opacity-50"
+              className="w-full bg-black text-white text-sm px-6 py-2 rounded-md hover:bg-black transition-all flex items-center justify-center gap-2 font-medium disabled:opacity-50 hover:scale-[1.02] hover:shadow-lg"
             >
               <UserPlus size={18} />
               {loading ? "Creating User..." : "Create User Account"}

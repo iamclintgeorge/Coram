@@ -49,7 +49,7 @@ function Login() {
   };
 
   return (
-    <div className="h-screen bg-[#f4f4f4] relative overflow-hidden">
+    <div className="h-screen font-inter relative overflow-hidden">
       {/* Background decoration */}
       {/* <div className="absolute inset-0 overflow-hidden">
         <div className="absolute -top-40 -right-40 w-80 h-80 rounded-full bg-[#af0f0f] opacity-10 blur-3xl animate-pulse"></div>
@@ -154,7 +154,7 @@ function Login() {
                         onChange={(e) => setEmail(e.target.value)}
                         required
                         disabled={loading}
-                        className="w-full pl-10 pr-3 py-3 text-sm border-2 border-gray-200 rounded-lg focus:border-[#af0f0f] focus:ring-0 transition-all duration-300 disabled:bg-gray-50 disabled:opacity-70 text-[#0C2340] placeholder-gray-400"
+                        className="w-full pl-10 pr-3 py-1 text-sm border-2 border-gray-200 rounded-lg focus:border-[#af0f0f] focus:ring-0 transition-all duration-300 disabled:bg-gray-50 disabled:opacity-70 text-[#0C2340] placeholder-gray-400"
                         placeholder="Enter your email address"
                       />
                     </div>
@@ -192,7 +192,7 @@ function Login() {
                         onChange={(e) => setPassword(e.target.value)}
                         required
                         disabled={loading}
-                        className="w-full pl-10 pr-10 py-3 text-sm border-2 border-gray-200 rounded-lg focus:border-[#af0f0f] focus:ring-0 transition-all duration-300 disabled:bg-gray-50 disabled:opacity-70 text-[#0C2340] placeholder-gray-400"
+                        className="w-full pl-10 pr-10 py-1 text-sm border-2 border-gray-200 rounded-lg focus:border-[#af0f0f] focus:ring-0 transition-all duration-300 disabled:bg-gray-50 disabled:opacity-70 text-[#0C2340] placeholder-gray-400"
                         placeholder="Enter your password"
                       />
                       <button
@@ -244,7 +244,7 @@ function Login() {
                     <button
                       type="submit"
                       disabled={loading || !emailId || !password}
-                      className="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-semibold rounded-lg text-white bg-gradient-to-r from-[#ae4242] to-[#c45252] hover:from-[#c45252] hover:to-[#ae4242] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ae4242] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg disabled:transform-none"
+                      className="group relative w-full flex justify-center py-1 px-4 border border-transparent text-sm font-medium rounded-lg text-white bg-black hover:bg-black focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ae4242] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg disabled:transform-none"
                     >
                       {loading ? (
                         <div className="flex items-center">
